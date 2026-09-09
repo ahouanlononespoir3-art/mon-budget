@@ -1,108 +1,76 @@
-import {
-  CalendarClock,
-  Pause,
-  Play,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Plus, Trash2, Power, PowerOff } from "lucide-react";
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { useBudget } from "../../context/BudgetContext";
 import type {
   ExpenseFrequency,
+  RecurringExpense,
 } from "../../types/finance";
+import { formatMoney } from "../../utils/formatMoney";
+import { createId } from "../../utils/id";
 
-function formatMoney(
-  amount: number
-): string {
-  return new Intl.NumberFormat(
-    "fr-FR",
-    {
-      maximumFractionDigits: 0,
-    }
-  ).format(Math.round(amount));
-}
-
-function getToday(): string {
-  return new Date()
-    .toISOString()
-    .slice(0, 10);
-}
+const frequencyLabels: Record<ExpenseFrequency, string> = {
+  daily: "Chaque jour",
+  weekly: "Chaque semaine",
+  monthly: "Chaque mois",
+  custom: "Personnalisée",
+};
 
 export function RecurringExpenses() {
   const {
-    categories,
     recurringExpenses,
+    categories,
     addRecurringExpense,
     updateRecurringExpense,
     deleteRecurringExpense,
   } = useBudget();
 
-  const [isFormOpen, setIsFormOpen] =
-    useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [categoryId, setCategoryId] = useState(
+    categories[0]?.id ?? ""
+  );
+  const [frequency, setFrequency] =
+    useState<ExpenseFrequency>("monthly");
+  const [nextDate, setNextDate] = useState("");
+  const [mandatory, setMandatory] = useState(true);
+  const [note, setNote] = useState("");
 
-  const [
-    name,
-    setName,
-  ] = useState("");
-
-  const [
-    amount,
-    setAmount,
-  ] = useState("");
-
-  const [
-    categoryId,
-    setCategoryId,
-  ] = useState(
-    categories.find(
-      (category) => category.active
-    )?.id ?? ""
+  const activeExpenses = useMemo(
+    () =>
+      recurringExpenses.filter(
+        (expense) => expense.active
+      ),
+    [recurringExpenses]
   );
 
-  const [
-    frequency,
-    setFrequency,
-  ] =
-    useState<ExpenseFrequency>(
-      "monthly"
-    );
-
-  const [
-    nextDate,
-    setNextDate,
-  ] = useState(getToday());
-
-  const [
-    mandatory,
-    setMandatory,
-  ] = useState(true);
+  const inactiveExpenses = useMemo(
+    () =>
+      recurringExpenses.filter(
+        (expense) => !expense.active
+      ),
+    [recurringExpenses]
+  );
 
   const resetForm = () => {
     setName("");
     setAmount("");
-    setCategoryId(
-      categories.find(
-        (category) =>
-          category.active
-      )?.id ?? ""
-    );
+    setCategoryId(categories[0]?.id ?? "");
     setFrequency("monthly");
-    setNextDate(getToday());
+    setNextDate("");
     setMandatory(true);
+    setNote("");
   };
 
-  const handleCreate = () => {
-    const numericAmount =
-      Number(amount);
+  const handleSubmit = () => {
+    const numericAmount = Math.round(Number(amount));
 
     if (
       !name.trim() ||
-      !Number.isFinite(
-        numericAmount
-      ) ||
+      !Number.isFinite(numericAmount) ||
       numericAmount <= 0 ||
       !categoryId ||
       !nextDate
@@ -110,395 +78,386 @@ export function RecurringExpenses() {
       return;
     }
 
-    const now =
-      new Date().toISOString();
+    const now = new Date().toISOString();
 
-    addRecurringExpense({
-      id: crypto.randomUUID(),
+    const recurringExpense: RecurringExpense = {
+      id: createId("recurring"),
       name: name.trim(),
-      amount: Math.round(
-        numericAmount
-      ),
+      amount: numericAmount,
       categoryId,
       frequency,
       nextDate,
       startDate: nextDate,
-      endDate: null,
       mandatory,
       active: true,
+      note: note.trim() || undefined,
       createdAt: now,
       updatedAt: now,
-    });
+    };
+
+    addRecurringExpense(recurringExpense);
 
     resetForm();
-    setIsFormOpen(false);
+    setShowForm(false);
   };
 
-  const toggleActive = (
-    id: string
+  const getCategoryName = (id: string) =>
+    categories.find(
+      (category) => category.id === id
+    )?.name ?? "Sans catégorie";
+
+  const toggleRecurringExpense = (
+    expense: RecurringExpense,
+    active: boolean
   ) => {
-    const expense =
-      recurringExpenses.find(
-        (item) => item.id === id
-      );
-
-    if (!expense) {
-      return;
-    }
-
     updateRecurringExpense({
       ...expense,
-      active: !expense.active,
-      updatedAt:
-        new Date().toISOString(),
+      active,
+      updatedAt: new Date().toISOString(),
     });
-  };
-
-  const remove = (
-    id: string
-  ) => {
-    if (
-      window.confirm(
-        "Supprimer cette règle de dépense récurrente ?"
-      )
-    ) {
-      deleteRecurringExpense(
-        id
-      );
-    }
   };
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm font-medium text-slate-500">
-            Automatisation
-          </p>
-
-          <h1 className="mt-1 text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-slate-900">
             Dépenses récurrentes
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Configurez les dépenses qui
-            reviennent régulièrement.
+            Automatise tes dépenses régulières.
           </p>
         </div>
 
         <Button
-          onClick={() =>
-            setIsFormOpen(
-              (value) => !value
-            )
-          }
+          onClick={() => setShowForm((value) => !value)}
         >
-          <Plus size={18} />
-          Nouvelle règle
+          <Plus className="mr-2 h-4 w-4" />
+          Ajouter
         </Button>
-      </header>
+      </div>
 
-      <Card className="border-blue-200 bg-blue-50">
-        <div className="flex items-start gap-3">
-          <CalendarClock
-            className="mt-0.5 text-blue-600"
-            size={22}
-          />
-
-          <div>
-            <p className="font-semibold text-blue-900">
-              Règle ≠ dépense payée
-            </p>
-
-            <p className="mt-1 text-sm leading-6 text-blue-800">
-              Une dépense récurrente sert à
-              prévoir une dépense. Elle ne sera
-              jamais automatiquement considérée
-              comme une dépense réellement payée.
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {isFormOpen && (
-        <Card>
-          <h2 className="text-lg font-bold">
-            Nouvelle dépense récurrente
-          </h2>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
+      {showForm && (
+        <Card
+          title="Nouvelle dépense récurrente"
+          description="Cette règle générera des dépenses prévues."
+        >
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-semibold">
+              <label
+                htmlFor="recurring-name"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
                 Nom
               </label>
 
               <input
+                id="recurring-name"
                 value={name}
                 onChange={(event) =>
-                  setName(
-                    event.target.value
-                  )
+                  setName(event.target.value)
                 }
-                placeholder="Ex. Internet"
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none"
+                placeholder="Ex. Loyer"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold">
+              <label
+                htmlFor="recurring-amount"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
                 Montant
               </label>
 
               <input
+                id="recurring-amount"
                 type="number"
-                min="1"
+                min="0"
+                step="100"
                 value={amount}
                 onChange={(event) =>
-                  setAmount(
-                    event.target.value
-                  )
+                  setAmount(event.target.value)
                 }
-                placeholder="10000"
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none"
+                placeholder="50000"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold">
+              <label
+                htmlFor="recurring-category"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
                 Catégorie
               </label>
 
               <select
+                id="recurring-category"
                 value={categoryId}
                 onChange={(event) =>
-                  setCategoryId(
-                    event.target.value
-                  )
+                  setCategoryId(event.target.value)
                 }
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                {categories
-                  .filter(
-                    (category) =>
-                      category.active
-                  )
-                  .map(
-                    (category) => (
-                      <option
-                        key={
-                          category.id
-                        }
-                        value={
-                          category.id
-                        }
-                      >
-                        {
-                          category.name
-                        }
-                      </option>
-                    )
-                  )}
+                {categories.map((category) => (
+                  <option
+                    key={category.id}
+                    value={category.id}
+                  >
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="text-sm font-semibold">
+              <label
+                htmlFor="recurring-frequency"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
                 Fréquence
               </label>
 
               <select
+                id="recurring-frequency"
                 value={frequency}
                 onChange={(event) =>
                   setFrequency(
-                    event.target
-                      .value as ExpenseFrequency
+                    event.target.value as ExpenseFrequency
                   )
                 }
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                <option value="daily">
-                  Tous les jours
-                </option>
-                <option value="weekly">
-                  Toutes les semaines
-                </option>
-                <option value="monthly">
-                  Tous les mois
-                </option>
+                {Object.entries(frequencyLabels).map(
+                  ([value, label]) => (
+                    <option
+                      key={value}
+                      value={value}
+                    >
+                      {label}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
             <div>
-              <label className="text-sm font-semibold">
+              <label
+                htmlFor="recurring-next-date"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
                 Prochaine date
               </label>
 
               <input
+                id="recurring-next-date"
                 type="date"
                 value={nextDate}
                 onChange={(event) =>
-                  setNextDate(
-                    event.target.value
-                  )
+                  setNextDate(event.target.value)
                 }
-                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
-            <label className="flex items-center gap-3 self-end rounded-xl bg-slate-50 p-3 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={mandatory}
-                onChange={(event) =>
-                  setMandatory(
-                    event.target
-                      .checked
-                  )
-                }
-              />
+            <div>
+              <label
+                htmlFor="recurring-note"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Note
+              </label>
 
-              Dépense obligatoire
-            </label>
+              <input
+                id="recurring-note"
+                value={note}
+                onChange={(event) =>
+                  setNote(event.target.value)
+                }
+                placeholder="Optionnel"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
           </div>
+
+          <label className="mt-4 flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={mandatory}
+              onChange={(event) =>
+                setMandatory(event.target.checked)
+              }
+              className="h-4 w-4"
+            />
+
+            <span className="text-sm font-medium text-slate-700">
+              Dépense obligatoire
+            </span>
+          </label>
 
           <div className="mt-5 flex justify-end gap-3">
             <Button
               variant="secondary"
               onClick={() => {
                 resetForm();
-                setIsFormOpen(false);
+                setShowForm(false);
               }}
             >
               Annuler
             </Button>
 
-            <Button
-              onClick={
-                handleCreate
-              }
-            >
+            <Button onClick={handleSubmit}>
               Enregistrer
             </Button>
           </div>
         </Card>
       )}
 
-      <div className="space-y-3">
-        {recurringExpenses.length ===
-        0 ? (
-          <Card className="py-12 text-center">
-            <CalendarClock
-              size={36}
-              className="mx-auto text-slate-400"
-            />
-
-            <p className="mt-4 font-semibold">
-              Aucune règle récurrente
-            </p>
-          </Card>
+      <Card
+        title={`${activeExpenses.length} règle${
+          activeExpenses.length > 1 ? "s" : ""
+        } active${
+          activeExpenses.length > 1 ? "s" : ""
+        }`}
+      >
+        {activeExpenses.length === 0 ? (
+          <p className="py-8 text-center text-sm text-slate-500">
+            Aucune dépense récurrente active.
+          </p>
         ) : (
-          recurringExpenses.map(
-            (expense) => {
-              const category =
-                categories.find(
-                  (item) =>
-                    item.id ===
-                    expense.categoryId
-                );
+          <div className="divide-y divide-slate-100">
+            {activeExpenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold text-slate-900">
+                      {expense.name}
+                    </h3>
 
-              return (
-                <Card
-                  key={expense.id}
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-semibold">
-                          {
-                            expense.name
-                          }
-                        </h2>
-
-                        {expense.mandatory && (
-                          <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-600">
-                            Obligatoire
-                          </span>
-                        )}
-
-                        {!expense.active && (
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="mt-1 text-sm text-slate-500">
-                        {category?.name ??
-                          "Sans catégorie"}{" "}
-                        ·{" "}
-                        {expense.frequency}{" "}
-                        · prochaine date{" "}
-                        {
-                          expense.nextDate
-                        }
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <p className="font-bold">
-                        {formatMoney(
-                          expense.amount
-                        )}{" "}
-                        FCFA
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          toggleActive(
-                            expense.id
-                          )
-                        }
-                        className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
-                        aria-label={
-                          expense.active
-                            ? "Désactiver"
-                            : "Activer"
-                        }
-                      >
-                        {expense.active ? (
-                          <Pause
-                            size={18}
-                          />
-                        ) : (
-                          <Play
-                            size={18}
-                          />
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          remove(
-                            expense.id
-                          )
-                        }
-                        className="rounded-xl p-2 text-red-500 hover:bg-red-50"
-                        aria-label="Supprimer"
-                      >
-                        <Trash2
-                          size={18}
-                        />
-                      </button>
-                    </div>
+                    {expense.mandatory && (
+                      <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-600">
+                        Obligatoire
+                      </span>
+                    )}
                   </div>
-                </Card>
-              );
-            }
-          )
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    {getCategoryName(
+                      expense.categoryId
+                    )}{" "}
+                    ·{" "}
+                    {frequencyLabels[expense.frequency]}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    Prochaine échéance :{" "}
+                    {expense.nextDate}
+                  </p>
+
+                  {expense.note && (
+                    <p className="mt-1 text-xs text-slate-400">
+                      {expense.note}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <strong className="text-lg text-slate-900">
+                    {formatMoney(expense.amount)}
+                  </strong>
+
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    aria-label={`Désactiver ${expense.name}`}
+                    onClick={() =>
+                      toggleRecurringExpense(
+                        expense,
+                        false
+                      )
+                    }
+                  >
+                    <PowerOff className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="small"
+                    aria-label={`Supprimer ${expense.name}`}
+                    onClick={() =>
+                      deleteRecurringExpense(expense.id)
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-      </div>
+      </Card>
+
+      {inactiveExpenses.length > 0 && (
+        <Card title="Règles désactivées">
+          <div className="divide-y divide-slate-100">
+            {inactiveExpenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-semibold text-slate-700">
+                    {expense.name}
+                  </p>
+
+                  <p className="text-sm text-slate-400">
+                    {formatMoney(expense.amount)} ·{" "}
+                    {getCategoryName(
+                      expense.categoryId
+                    )}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    {frequencyLabels[expense.frequency]}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() =>
+                      toggleRecurringExpense(
+                        expense,
+                        true
+                      )
+                    }
+                  >
+                    <Power className="mr-2 h-4 w-4" />
+                    Réactiver
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="small"
+                    aria-label={`Supprimer ${expense.name}`}
+                    onClick={() =>
+                      deleteRecurringExpense(expense.id)
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

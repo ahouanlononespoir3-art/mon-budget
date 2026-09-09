@@ -1,35 +1,48 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-  padding?: "small" | "medium" | "large";
+  title?: string;
+  description?: string;
+  action?: ReactNode;
 }
 
 export function Card({
+  title,
+  description,
+  action,
   children,
-  padding = "medium",
   className = "",
   ...props
 }: CardProps) {
-  const paddingStyles = {
-    small: "p-3",
-    medium: "p-5",
-    large: "p-6",
-  };
-
   return (
-    <div
-      className={`
-        rounded-2xl
-        border border-slate-200
-        bg-white
-        shadow-sm
-        ${paddingStyles[padding]}
-        ${className}
-      `}
+    <section
+      className={[
+        "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm",
+        className,
+      ].join(" ")}
       {...props}
     >
+      {(title || description || action) && (
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            {title && (
+              <h2 className="text-lg font-bold text-slate-900">
+                {title}
+              </h2>
+            )}
+
+            {description && (
+              <p className="mt-1 text-sm text-slate-500">
+                {description}
+              </p>
+            )}
+          </div>
+
+          {action}
+        </div>
+      )}
+
       {children}
-    </div>
+    </section>
   );
 }

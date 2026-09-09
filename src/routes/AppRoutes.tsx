@@ -1,16 +1,19 @@
+import { RecurringExpenses } from "../pages/Recurring/RecurringExpenses";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { MainLayout } from "../layouts/MainLayout";
 import { Dashboard } from "../pages/Dashboard/Dashboard";
 import { Expenses } from "../pages/Expenses/Expenses";
 import { Goals } from "../pages/Goals/Goals";
-import { RecurringExpenses } from "../pages/Recurring/RecurringExpenses";
+import { Onboarding } from "../pages/Onboarding/Onboarding";
 import { Statistics } from "../pages/Statistics/Statistics";
 import { More } from "../pages/Settings/More";
 
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/onboarding" element={<Onboarding />} />
+
       <Route
         path="/"
         element={
@@ -25,15 +28,6 @@ export function AppRoutes() {
         element={
           <MainLayout>
             <Expenses />
-          </MainLayout>
-        }
-      />
-
-      <Route
-        path="/recurring"
-        element={
-          <MainLayout>
-            <RecurringExpenses />
           </MainLayout>
         }
       />
@@ -57,6 +51,14 @@ export function AppRoutes() {
       />
 
       <Route
+        path="/recurring"
+        element={
+          <MainLayout>
+            <RecurringExpenses />
+          </MainLayout>
+       }
+      />
+      <Route
         path="/more"
         element={
           <MainLayout>
@@ -67,12 +69,7 @@ export function AppRoutes() {
 
       <Route
         path="*"
-        element={
-          <Navigate
-            to="/"
-            replace
-          />
-        }
+        element={<Navigate to="/" replace />}
       />
     </Routes>
   );

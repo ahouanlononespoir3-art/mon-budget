@@ -4,7 +4,9 @@ export function formatMoney(
 ): string {
   const safeAmount = Number.isFinite(amount) ? amount : 0;
 
-  return `${Math.round(safeAmount).toLocaleString("fr-FR")} ${currency}`;
+  return `${Math.round(safeAmount).toLocaleString(
+    "fr-FR"
+  )} ${currency}`;
 }
 
 export function formatShortMoney(amount: number): string {

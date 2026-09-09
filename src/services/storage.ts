@@ -1,3 +1,5 @@
+import type { BudgetSettings } from "../types/finance";
+import { defaultBudgetSettings } from "../types/settings";
 import type {
   BudgetMonth,
   Category,
@@ -508,5 +510,48 @@ export function clearAllStorage(): void {
     (key) => {
       localStorage.removeItem(key);
     }
+  );
+}
+export function getSettings(): BudgetSettings {
+  const stored = localStorage.getItem(
+    "mon-budget:settings"
+  );
+
+  if (!stored) {
+    return defaultBudgetSettings;
+  }
+
+  try {
+    return {
+      ...defaultBudgetSettings,
+      ...(JSON.parse(stored) as Partial<BudgetSettings>),
+    };
+  } catch {
+    return defaultBudgetSettings;
+  }
+}
+
+export function saveSettings(
+  settings: BudgetSettings
+): void {
+  localStorage.setItem(
+    "mon-budget:settings",
+    JSON.stringify(settings)
+  );
+}
+export function isOnboardingCompleted(): boolean {
+  return (
+    localStorage.getItem(
+      "mon-budget:onboarding-completed"
+    ) === "true"
+  );
+}
+
+export function setOnboardingCompleted(
+  completed: boolean
+): void {
+  localStorage.setItem(
+    "mon-budget:onboarding-completed",
+    String(completed)
   );
 }
