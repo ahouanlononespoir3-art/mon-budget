@@ -10,6 +10,7 @@ import {
   setOnboardingCompleted,
 } from "../../services/storage";
 import type { BudgetSettings } from "../../types/finance";
+import { getCurrencyLabel } from "../../utils/currency";
 import { useBudget } from "../../context/BudgetContext";
 
 export function Onboarding() {
@@ -119,7 +120,7 @@ export function Onboarding() {
                   />
 
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
-                    FCFA
+                    {getCurrencyLabel(currentSettings.currency).split(" — ")[0]}
                   </span>
                 </div>
               </div>
@@ -167,7 +168,7 @@ export function Onboarding() {
                   />
 
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
-                    FCFA
+                    {getCurrencyLabel(currentSettings.currency).split(" — ")[0]}
                   </span>
                 </div>
               </div>
@@ -204,7 +205,7 @@ export function Onboarding() {
                     Budget mensuel
                   </span>
                   <strong className="text-slate-900">
-                    {monthlyAmount.toLocaleString("fr-FR")} FCFA
+                    {monthlyAmount.toLocaleString("fr-FR")} {getCurrencyLabel(currentSettings.currency).split(" — ")[0]}
                   </strong>
                 </div>
 
@@ -216,7 +217,7 @@ export function Onboarding() {
                     {minimumEndBalance.toLocaleString(
                       "fr-FR"
                     )}{" "}
-                    FCFA
+                    {getCurrencyLabel(currentSettings.currency).split(" — ")[0]}
                   </strong>
                 </div>
               </div>

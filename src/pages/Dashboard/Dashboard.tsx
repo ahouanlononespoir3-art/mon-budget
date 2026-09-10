@@ -20,14 +20,7 @@ import type {
   ForecastScenario,
   PlannedExpense,
 } from "../../types/finance";
-
-function formatMoney(
-  amount: number
-): string {
-  return `${new Intl.NumberFormat(
-    "fr-FR"
-  ).format(Math.round(amount))} FCFA`;
-}
+import { formatMoney } from "../../utils/formatMoney";
 
 function formatDate(
   date: string

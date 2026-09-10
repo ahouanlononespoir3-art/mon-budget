@@ -215,6 +215,7 @@ export function BudgetProvider({
       storedBudgetMonth ?? demoBudgetMonth;
     let configuredBudgetMonth: BudgetMonth = {
       ...baseBudgetMonth,
+      currency: settings.currency,
       initialBudget: settings.usualMonthlyAmount,
       minimumEndBalance: settings.minimumEndBalance,
       totalBudget:

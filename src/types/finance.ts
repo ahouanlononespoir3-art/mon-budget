@@ -1,4 +1,12 @@
-export type Currency = "XOF";
+export type Currency =
+  | "XOF"
+  | "EUR"
+  | "USD"
+  | "GBP"
+  | "CAD"
+  | "MAD"
+  | "NGN"
+  | "GHS";
 
 export type ExpenseFrequency =
   | "daily"

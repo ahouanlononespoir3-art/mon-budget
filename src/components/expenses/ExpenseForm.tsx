@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { Category } from "../../types/finance";
+import { getCurrencyLabel, getStoredCurrency } from "../../utils/currency";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 
@@ -161,7 +162,7 @@ export function ExpenseForm({
                 />
 
                 <span className="text-sm font-semibold text-slate-500">
-                  FCFA
+                    {getCurrencyLabel(getStoredCurrency()).split(" — ")[0]}
                 </span>
               </div>
 

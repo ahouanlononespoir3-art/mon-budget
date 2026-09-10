@@ -6,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { getSettings, saveSettings } from "../../services/storage";
 import type { BudgetSettings } from "../../types/finance";
 import { formatMoney } from "../../utils/formatMoney";
+import { CURRENCY_OPTIONS } from "../../utils/currency";
 import { useBudget } from "../../context/BudgetContext";
 
 export function BudgetSettings() {
@@ -36,6 +37,7 @@ export function BudgetSettings() {
     });
     updateBudgetMonth({
       ...budgetMonth,
+      currency: settings.currency,
       initialBudget: settings.usualMonthlyAmount,
       minimumEndBalance: settings.minimumEndBalance,
       totalBudget: settings.usualMonthlyAmount + budgetMonth.carryOver,
@@ -136,15 +138,17 @@ export function BudgetSettings() {
               onChange={(event) =>
                 setSettings((current) => ({
                   ...current,
-                  currency: event.target.value as "XOF",
+                    currency: event.target.value as BudgetSettings["currency"],
                   updatedAt: new Date().toISOString(),
                 }))
               }
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="XOF">
-                XOF — FCFA
-              </option>
+              {CURRENCY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 

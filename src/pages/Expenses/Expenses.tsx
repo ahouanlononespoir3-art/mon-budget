@@ -16,14 +16,7 @@ import {
 } from "../../components/expenses/ExpenseForm";
 import type { Expense } from "../../types/finance";
 import { createId } from "../../utils/id";
-
-function formatMoney(
-  amount: number
-): string {
-  return `${new Intl.NumberFormat(
-    "fr-FR"
-  ).format(amount)} FCFA`;
-}
+import { formatMoney } from "../../utils/formatMoney";
 
 function formatDate(
   date: string

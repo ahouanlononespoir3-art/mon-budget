@@ -1,12 +1,17 @@
+import type { Currency } from "../types/finance";
+import { getCurrencyLocale, getStoredCurrency } from "./currency";
+
 export function formatMoney(
   amount: number,
-  currency = "FCFA"
+  currency: Currency = getStoredCurrency()
 ): string {
   const safeAmount = Number.isFinite(amount) ? amount : 0;
 
-  return `${Math.round(safeAmount).toLocaleString(
-    "fr-FR"
-  )} ${currency}`;
+  return new Intl.NumberFormat(getCurrencyLocale(currency), {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Math.round(safeAmount));
 }
 
 export function formatShortMoney(amount: number): string {

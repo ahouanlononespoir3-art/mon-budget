@@ -10,6 +10,7 @@ import { Card } from "../../components/ui/Card";
 import { useBudget } from "../../context/BudgetContext";
 import { calculateSimulation } from "../../core/financialEngine";
 import { formatMoney } from "../../utils/formatMoney";
+import { getCurrencyLabel, getStoredCurrency } from "../../utils/currency";
 
 export function Simulator() {
   const {
@@ -82,7 +83,7 @@ export function Simulator() {
             />
 
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
-              FCFA
+              {getCurrencyLabel(getStoredCurrency()).split(" — ")[0]}
             </span>
           </div>
 
