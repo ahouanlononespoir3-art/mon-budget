@@ -1,15 +1,21 @@
 import {
   getBudgetMonth,
+  getBudgetMonths,
   getCategories,
   getExpenses,
+  getFuturePurchases,
+  getMonthlySummaries,
   getPlannedExpenses,
   getRecurringExpenses,
   getSavingsGoals,
   getSavingsTransfers,
   getSettings,
   saveBudgetMonth,
+  saveBudgetMonths,
   saveCategories,
   saveExpenses,
+  saveFuturePurchases,
+  saveMonthlySummaries,
   savePlannedExpenses,
   saveRecurringExpenses,
   saveSavingsGoals,
@@ -27,6 +33,9 @@ interface ImportData {
   savingsGoals: ReturnType<typeof getSavingsGoals>;
   savingsTransfers: ReturnType<typeof getSavingsTransfers>;
   settings: BudgetSettings;
+  budgetMonths: ReturnType<typeof getBudgetMonths>;
+  monthlySummaries: ReturnType<typeof getMonthlySummaries>;
+  futurePurchases: ReturnType<typeof getFuturePurchases>;
 }
 
 export function exportAllData(): void {
@@ -34,12 +43,15 @@ export function exportAllData(): void {
     version: 1,
     exportedAt: new Date().toISOString(),
     budgetMonth: getBudgetMonth(),
+    budgetMonths: getBudgetMonths(),
+    monthlySummaries: getMonthlySummaries(),
     categories: getCategories(),
     expenses: getExpenses(),
     plannedExpenses: getPlannedExpenses(),
     recurringExpenses: getRecurringExpenses(),
     savingsGoals: getSavingsGoals(),
     savingsTransfers: getSavingsTransfers(),
+    futurePurchases: getFuturePurchases(),
     settings: getSettings(),
   };
 
@@ -144,11 +156,14 @@ export function importAllData(raw: unknown): void {
   }
 
   saveBudgetMonth(data.budgetMonth);
+  saveBudgetMonths(Array.isArray(data.budgetMonths) ? data.budgetMonths : [data.budgetMonth]);
+  saveMonthlySummaries(Array.isArray(data.monthlySummaries) ? data.monthlySummaries : []);
   saveCategories(data.categories);
   saveExpenses(data.expenses);
   savePlannedExpenses(Array.isArray(data.plannedExpenses) ? data.plannedExpenses : []);
   saveRecurringExpenses(Array.isArray(data.recurringExpenses) ? data.recurringExpenses : []);
   saveSavingsGoals(Array.isArray(data.savingsGoals) ? data.savingsGoals : []);
   saveSavingsTransfers(Array.isArray(data.savingsTransfers) ? data.savingsTransfers : []);
+  saveFuturePurchases(Array.isArray(data.futurePurchases) ? data.futurePurchases : []);
   if (data.settings) saveSettings(data.settings);
 }

@@ -104,6 +104,29 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(interval);
   }, [user, isOnline, syncNow]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    let timeout: number | undefined;
+
+    const handleDataChanged = () => {
+      if (timeout !== undefined) {
+        window.clearTimeout(timeout);
+      }
+
+      timeout = window.setTimeout(() => {
+        void syncNow();
+      }, 500);
+    };
+
+    window.addEventListener("mon-budget:data-changed", handleDataChanged);
+
+    return () => {
+      window.removeEventListener("mon-budget:data-changed", handleDataChanged);
+      if (timeout !== undefined) window.clearTimeout(timeout);
+    };
+  }, [user, syncNow]);
+
   const value = useMemo(() => ({ status, isOnline, lastSyncAt, error, syncNow }), [status, isOnline, lastSyncAt, error, syncNow]);
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
 }

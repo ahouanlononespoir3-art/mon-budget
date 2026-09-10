@@ -42,6 +42,13 @@ function readStorage<T>(key: string, fallback: T): T {
 function writeStorage<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("mon-budget:data-changed", {
+          detail: { key },
+        })
+      );
+    }
   } catch (error) {
     console.error(`Impossible d'enregistrer les données "${key}".`, error);
   }

@@ -5,6 +5,7 @@ import {
   Repeat,
   Settings,
   ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -28,6 +29,29 @@ export function More() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <Link to="/notifications" className="block">
+          <Card>
+            <Bell className="text-slate-600" size={24} />
+            <h2 className="mt-4 font-semibold">Notifications</h2>
+            <p className="mt-1 text-sm text-slate-500">Retrouve les alertes et événements importants.</p>
+          </Card>
+        </Link>
+
+        <Link to="/settings/profile" className="block">
+          <Card>
+            <UserRound className="text-slate-600" size={24} />
+            <h2 className="mt-4 font-semibold">Profil utilisateur</h2>
+            <p className="mt-1 text-sm text-slate-500">Modifie ton nom et consulte ton compte.</p>
+          </Card>
+        </Link>
+
+        <Link to="/settings/security" className="block">
+          <Card>
+            <ShieldCheck className="text-slate-600" size={24} />
+            <h2 className="mt-4 font-semibold">Sécurité</h2>
+            <p className="mt-1 text-sm text-slate-500">Mot de passe, session et suppression du compte.</p>
+          </Card>
+        </Link>
         <Link to="/calendar" className="block">
           <Card>
           <CalendarDays className="text-slate-600" size={24} />

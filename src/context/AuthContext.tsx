@@ -27,6 +27,13 @@ interface AuthContextValue {
   resetPassword: (
     email: string
   ) => Promise<{ error: string | null }>;
+  updateProfile: (
+    displayName: string
+  ) => Promise<{ error: string | null }>;
+  updateEmail: (
+    email: string
+  ) => Promise<{ error: string | null; message?: string }>;
+  deleteAccount: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(
@@ -143,8 +150,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? translateAuthError(error.message) : null };
   }
 
+  async function updateProfile(displayName: string) {
+    const { error } = await supabase.auth.updateUser({
+      data: { display_name: displayName.trim() || undefined },
+    });
+
+    return {
+      error: error ? translateAuthError(error.message) : null,
+    };
+  }
+
+  async function updateEmail(email: string) {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      return { error: "Entre une adresse e-mail valide." };
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      email: cleanEmail,
+    });
+
+    return {
+      error: error ? translateAuthError(error.message) : null,
+      message: error
+        ? undefined
+        : "Un e-mail de confirmation a été envoyé à la nouvelle adresse.",
+    };
+  }
+
+  async function deleteAccount() {
+    const { error } = await supabase.rpc("delete_user");
+
+    return {
+      error: error
+        ? "La suppression du compte n'est pas disponible. Configure la fonction Supabase delete_user."
+        : null,
+    };
+  }
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, session, loading, signUp, signIn, signOut, resetPassword }),
+    () => ({
+      user,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      resetPassword,
+      updateProfile,
+      updateEmail,
+      deleteAccount,
+    }),
     [user, session, loading]
   );
 

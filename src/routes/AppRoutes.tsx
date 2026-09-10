@@ -21,6 +21,9 @@ import { Assistant } from "../pages/Assistant/Assistant";
 import { Alerts } from "../pages/Assistant/Alerts";
 import { FuturePurchases } from "../pages/Purchases/FuturePurchases";
 import { History } from "../pages/Statistics/History";
+import { Notifications } from "../pages/Assistant/Notifications";
+import { Profile } from "../pages/Settings/Profile";
+import { Security } from "../pages/Settings/Security";
 
 function Protected({ children }: { children: React.ReactNode }) {
   return <RequireAuth>{children}</RequireAuth>;
@@ -110,6 +113,7 @@ export function AppRoutes() {
 
       <Route path="/assistant" element={<Protected><MainLayout><Assistant /></MainLayout></Protected>} />
       <Route path="/alerts" element={<Protected><MainLayout><Alerts /></MainLayout></Protected>} />
+      <Route path="/notifications" element={<Protected><MainLayout><Notifications /></MainLayout></Protected>} />
 
       <Route
         path="/statistics"
@@ -166,6 +170,9 @@ export function AppRoutes() {
           <Protected><MainLayout><Categories /></MainLayout></Protected>
         }
       />
+
+      <Route path="/settings/profile" element={<Protected><MainLayout><Profile /></MainLayout></Protected>} />
+      <Route path="/settings/security" element={<Protected><MainLayout><Security /></MainLayout></Protected>} />
 
       <Route
         path="/more"

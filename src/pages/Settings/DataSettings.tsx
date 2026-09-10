@@ -15,19 +15,27 @@ export function DataSettings() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { refreshData } = useBudget();
   const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const importFile = async (file: File) => {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
     try {
       importAllData(JSON.parse(await file.text()));
       refreshData();
       setMessage("Import terminé.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Import impossible.");
+    } finally {
+      setBusy(false);
     }
   };
 
   const reset = () => {
+    if (busy) return;
     if (!window.confirm("Supprimer toutes les données locales ?")) return;
+    setBusy(true);
     clearAllStorage();
     window.location.reload();
   };
@@ -49,7 +57,7 @@ export function DataSettings() {
         description="Les fichiers sont générés directement dans ton navigateur."
       >
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={exportAllData}>
+          <Button onClick={exportAllData} disabled={busy}>
             <Download className="mr-2 h-4 w-4" />
             Exporter toutes mes données
           </Button>
@@ -57,12 +65,13 @@ export function DataSettings() {
           <Button
             variant="secondary"
             onClick={exportExpensesCSV}
+            disabled={busy}
           >
             <Download className="mr-2 h-4 w-4" />
             Exporter les dépenses CSV
           </Button>
 
-          <Button variant="secondary" onClick={() => inputRef.current?.click()}>
+          <Button variant="secondary" onClick={() => inputRef.current?.click()} disabled={busy}>
             <Upload className="mr-2 h-4 w-4" />
             Importer un export JSON
           </Button>
@@ -72,7 +81,7 @@ export function DataSettings() {
       </Card>
 
       <Card title="Zone sensible" description="Cette action efface toutes les données enregistrées sur cet appareil.">
-        <Button variant="danger" onClick={reset}><RotateCcw className="mr-2 h-4 w-4" />Réinitialiser les données</Button>
+        <Button variant="danger" onClick={reset} disabled={busy}><RotateCcw className="mr-2 h-4 w-4" />Réinitialiser les données</Button>
       </Card>
     </div>
   );

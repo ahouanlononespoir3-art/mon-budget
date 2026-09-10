@@ -162,6 +162,10 @@ export function MainLayout({
             </div>
           </Link>
 
+          <div className="mr-2 lg:hidden">
+            <SyncStatus />
+          </div>
+
           <nav className="hidden items-center gap-1 md:flex">
             {navigationItems.map(
               (item) => {
