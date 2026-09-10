@@ -41,13 +41,17 @@ function NotFound() {
 import { isOnboardingCompleted } from "../services/storage";
 
 function AppEntry() {
-  return isOnboardingCompleted() ? (
+  return (
     <Protected>
+      {isOnboardingCompleted() ? (
       <MainLayout>
         <Dashboard />
       </MainLayout>
+      ) : (
+        <Navigate to="/onboarding" replace />
+      )}
     </Protected>
-  ) : <Navigate to="/onboarding" replace />;
+  );
 }
 
 export function AppRoutes() {
@@ -57,7 +61,11 @@ export function AppRoutes() {
 
       <Route
         path="/onboarding"
-        element={<Onboarding />}
+        element={
+          <Protected>
+            <Onboarding />
+          </Protected>
+        }
       />
 
       <Route
