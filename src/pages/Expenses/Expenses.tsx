@@ -1,12 +1,21 @@
 import {
   CalendarDays,
+  Pencil,
   Receipt,
+  Search,
   Trash2,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { useBudget } from "../../context/BudgetContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import {
+  ExpenseForm,
+  type ExpenseFormData,
+} from "../../components/expenses/ExpenseForm";
+import type { Expense } from "../../types/finance";
+import { createId } from "../../utils/id";
 
 function formatMoney(
   amount: number
@@ -34,20 +43,43 @@ export function Expenses() {
     expenses,
     categories,
     budgetMonth,
+    addExpense,
+    updateExpense,
     deleteExpense,
   } = useBudget();
 
-  const monthExpenses =
-    expenses
+  const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [period, setPeriod] = useState("month");
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  const monthExpenses = useMemo(() => expenses
       .filter(
         (expense) =>
           expense.budgetMonthId ===
           budgetMonth.id
       )
+      .filter((expense) =>
+        !query.trim() ||
+        expense.description.toLowerCase().includes(query.toLowerCase()) ||
+        expense.note?.toLowerCase().includes(query.toLowerCase())
+      )
+      .filter((expense) =>
+        categoryFilter === "all" || expense.categoryId === categoryFilter
+      )
+      .filter((expense) => {
+        if (period === "month") return true;
+        const expenseDate = new Date(`${expense.date}T00:00:00`);
+        const now = new Date();
+        if (period === "today") return expense.date === now.toISOString().slice(0, 10);
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - 6);
+        return expenseDate >= weekStart;
+      })
       .sort(
         (a, b) =>
           b.date.localeCompare(a.date)
-      );
+      ), [expenses, budgetMonth.id, query, categoryFilter, period]);
 
   const totalSpent =
     monthExpenses.reduce(
@@ -85,6 +117,44 @@ export function Expenses() {
     }
   };
 
+  const handleSubmit = (data: ExpenseFormData) => {
+    const now = new Date().toISOString();
+    if (editingExpense) {
+      updateExpense({
+        ...editingExpense,
+        ...data,
+        amount: Math.round(data.amount),
+        description: data.description.trim(),
+        note: data.note?.trim() || undefined,
+        updatedAt: now,
+      });
+    } else {
+      addExpense({
+        id: createId("expense"),
+        budgetMonthId: budgetMonth.id,
+        amount: Math.round(data.amount),
+        description: data.description.trim(),
+        categoryId: data.categoryId,
+        date: data.date,
+        note: data.note?.trim() || undefined,
+        refundedAmount: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    setEditingExpense(null);
+  };
+
+  const addRefund = (expense: Expense) => {
+    const refund = Number(window.prompt("Montant du remboursement", "0"));
+    if (!Number.isFinite(refund) || refund <= 0) return;
+    updateExpense({
+      ...expense,
+      refundedAmount: Math.min(expense.amount, expense.refundedAmount + Math.round(refund)),
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -112,6 +182,29 @@ export function Expenses() {
           </p>
         </Card>
       </header>
+
+      <Card>
+        <div className="grid gap-3 md:grid-cols-[1fr_180px_150px]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Rechercher une dépense"
+              className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-4 outline-none focus:border-blue-500"
+            />
+          </label>
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-3">
+            <option value="all">Toutes les catégories</option>
+            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select>
+          <select value={period} onChange={(event) => setPeriod(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-3">
+            <option value="month">Ce mois</option>
+            <option value="week">7 derniers jours</option>
+            <option value="today">Aujourd'hui</option>
+          </select>
+        </div>
+      </Card>
 
       {monthExpenses.length === 0 ? (
         <Card className="flex min-h-64 flex-col items-center justify-center text-center">
@@ -203,11 +296,25 @@ export function Expenses() {
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() =>
-                          handleDelete(
-                            expense.id
-                          )
-                        }
+                        onClick={() => setEditingExpense(expense)}
+                        aria-label={`Modifier ${expense.description}`}
+                      >
+                        <Pencil size={18} />
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => addRefund(expense)}
+                        aria-label={`Ajouter un remboursement à ${expense.description}`}
+                      >
+                        Rembourser
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => handleDelete(expense.id)}
                         aria-label={`Supprimer ${expense.description}`}
                       >
                         <Trash2
@@ -221,6 +328,17 @@ export function Expenses() {
             )}
           </div>
         </Card>
+      )}
+
+      {editingExpense && (
+        <ExpenseForm
+          key={editingExpense.id}
+          categories={categories}
+          title="Modifier la dépense"
+          initialValues={editingExpense}
+          onClose={() => setEditingExpense(null)}
+          onSubmit={handleSubmit}
+        />
       )}
     </div>
   );

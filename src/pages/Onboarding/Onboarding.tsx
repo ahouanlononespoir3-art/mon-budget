@@ -10,9 +10,11 @@ import {
   setOnboardingCompleted,
 } from "../../services/storage";
 import type { BudgetSettings } from "../../types/finance";
+import { useBudget } from "../../context/BudgetContext";
 
 export function Onboarding() {
   const navigate = useNavigate();
+  const { budgetMonth, updateBudgetMonth } = useBudget();
 
   const currentSettings = getSettings();
 
@@ -42,6 +44,16 @@ export function Onboarding() {
 
   const finish = () => {
     saveAndContinue();
+    const nextBudget = {
+      ...budgetMonth,
+      initialBudget: Math.max(0, Math.round(monthlyAmount)),
+      minimumEndBalance: Math.max(0, Math.round(minimumEndBalance)),
+      totalBudget:
+        Math.max(0, Math.round(monthlyAmount)) +
+        Math.max(0, budgetMonth.carryOver),
+      updatedAt: new Date().toISOString(),
+    };
+    updateBudgetMonth(nextBudget);
     setOnboardingCompleted(true);
     navigate("/", { replace: true });
   };

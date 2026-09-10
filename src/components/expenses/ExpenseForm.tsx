@@ -41,6 +41,8 @@ interface ExpenseFormProps {
   categories: Category[];
   onClose: () => void;
   onSubmit: (data: ExpenseFormData) => void;
+  initialValues?: Partial<ExpenseFormData>;
+  title?: string;
 }
 
 function getTodayDate(): string {
@@ -57,6 +59,8 @@ export function ExpenseForm({
   categories,
   onClose,
   onSubmit,
+  initialValues,
+  title = "Ajouter une dépense",
 }: ExpenseFormProps) {
   const {
     register,
@@ -65,12 +69,14 @@ export function ExpenseForm({
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      amount: undefined,
-      description: "",
+      amount: initialValues?.amount,
+      description: initialValues?.description ?? "",
       categoryId:
-        categories.find((category) => category.active)?.id ?? "",
-      date: getTodayDate(),
-      note: "",
+        initialValues?.categoryId ??
+        categories.find((category) => category.active)?.id ??
+        "",
+      date: initialValues?.date ?? getTodayDate(),
+      note: initialValues?.note ?? "",
     },
   });
 
@@ -88,7 +94,7 @@ export function ExpenseForm({
             </p>
 
             <h2 className="mt-1 text-xl font-bold text-slate-900">
-              Ajouter une dépense
+              {title}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">

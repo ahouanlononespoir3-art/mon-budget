@@ -1,73 +1,115 @@
-import {
-  differenceInCalendarDays,
-  getDaysInMonth as dateFnsGetDaysInMonth,
-} from "date-fns";
-
 import type {
   BudgetCalculation,
   BudgetMonth,
   EconomyMode,
   Expense,
   ForecastScenario,
-  RiskLevel,
+  PlannedExpense,
+  SavingsTransfer,
+  SimulationResult,
 } from "../types/finance";
 
-/**
- * Sécurise un montant financier.
- * Les montants négatifs et NaN sont ramenés à 0.
- */
-function safeAmount(value: number | null | undefined): number {
-  if (!Number.isFinite(value ?? NaN)) {
+/* =========================================================
+   UTILITAIRES
+   ========================================================= */
+
+function safeAmount(value: number): number {
+  return Number.isFinite(value)
+    ? Math.max(0, Math.round(value))
+    : 0;
+}
+
+function parseDate(date: string): Date {
+  const parsed = new Date(`${date}T00:00:00`);
+
+  return parsed;
+}
+
+function clamp(
+  value: number,
+  min: number,
+  max: number
+): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+/* =========================================================
+   DATES
+   ========================================================= */
+
+export function getDaysInMonth(date: Date): number {
+  if (Number.isNaN(date.getTime())) {
     return 0;
   }
 
-  return Math.max(0, Math.round(value ?? 0));
+  return new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0
+  ).getDate();
 }
 
 /**
- * Convertit une date YYYY-MM-DD en date locale.
- */
-function parseDate(date: string): Date {
-  return new Date(`${date}T00:00:00`);
-}
-
-/**
- * Retourne le nombre de jours d'un mois.
- */
-export function getDaysInMonth(date: Date): number {
-  return dateFnsGetDaysInMonth(date);
-}
-
-/**
- * Retourne le nombre de jours écoulés depuis le début
- * du mois budgétaire.
+ * Nombre de jours écoulés depuis le début du mois.
+ *
+ * Le premier jour compte comme 1.
  *
  * Exemple :
- * 01/09 -> 1 jour écoulé
- * 10/09 -> 10 jours écoulés
+ * 01/09 -> 1 jour
+ * 10/09 -> 10 jours
+ *
+ * Le résultat est limité à la durée du mois.
  */
 export function getDaysElapsed(
   monthStart: string,
   currentDate: Date
 ): number {
   const start = parseDate(monthStart);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(currentDate.getTime())
+  ) {
+    return 0;
+  }
+
   const daysInMonth = getDaysInMonth(start);
 
-  const difference =
-    differenceInCalendarDays(
-      currentDate,
-      start
+  const startDay = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate()
+  );
+
+  const currentDay = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate()
+  );
+
+  const elapsedMilliseconds =
+    currentDay.getTime() -
+    startDay.getTime();
+
+  const elapsedDays =
+    Math.floor(
+      elapsedMilliseconds /
+        (1000 * 60 * 60 * 24)
     ) + 1;
 
-  return Math.min(
-    Math.max(difference, 0),
+  return clamp(
+    elapsedDays,
+    0,
     daysInMonth
   );
 }
 
 /**
- * Retourne le nombre de jours restants jusqu'à la fin
- * du mois budgétaire.
+ * Nombre de jours restant jusqu'à la fin du mois.
+ *
+ * Exemple :
+ * 20/09 -> 10 jours restants jusqu'au 30/09
+ * après le 30/09 -> 0
  */
 export function getDaysRemaining(
   monthEnd: string,
@@ -75,369 +117,266 @@ export function getDaysRemaining(
 ): number {
   const end = parseDate(monthEnd);
 
+  if (
+    Number.isNaN(end.getTime()) ||
+    Number.isNaN(currentDate.getTime())
+  ) {
+    return 0;
+  }
+
+  const endDay = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate()
+  );
+
+  const currentDay = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate()
+  );
+
   const difference =
-    differenceInCalendarDays(
-      end,
-      currentDate
+    Math.ceil(
+      (endDay.getTime() -
+        currentDay.getTime()) /
+        (1000 * 60 * 60 * 24)
     );
 
   return Math.max(0, difference);
 }
 
-/**
- * Calcule le budget total disponible.
- *
- * Budget total = budget initial + report.
- */
+/* =========================================================
+   ALIAS DE COMPATIBILITÉ
+   ========================================================= */
+
+export function calculateDaysElapsed(
+  monthStart: string,
+  currentDate: Date
+): number {
+  return getDaysElapsed(
+    monthStart,
+    currentDate
+  );
+}
+
+export function calculateDaysRemaining(
+  monthEnd: string,
+  currentDate: Date
+): number {
+  return getDaysRemaining(
+    monthEnd,
+    currentDate
+  );
+}
+
+/* =========================================================
+   BUDGET
+   ========================================================= */
+
 export function calculateTotalBudget(
   budgetMonth: BudgetMonth
 ): number {
   return (
-    safeAmount(budgetMonth.initialBudget) +
-    safeAmount(budgetMonth.carryOver)
+    safeAmount(
+      budgetMonth.initialBudget
+    ) +
+    safeAmount(
+      budgetMonth.carryOver
+    )
   );
 }
 
-/**
- * Calcule les dépenses réellement effectuées.
- *
- * Une dépense effective = montant - remboursements.
- */
 export function calculateActualExpenses(
   expenses: Expense[]
 ): number {
+  if (!Array.isArray(expenses)) {
+    return 0;
+  }
+
   return expenses.reduce(
     (total, expense) => {
       const amount =
         safeAmount(expense.amount);
 
-      const refunded =
+      const refund =
         safeAmount(
           expense.refundedAmount
         );
 
-      const effectiveAmount =
+      return (
+        total +
         Math.max(
           0,
-          amount - refunded
-        );
-
-      return total + effectiveAmount;
+          amount - refund
+        )
+      );
     },
     0
   );
 }
 
-/**
- * Calcule le montant total épargné pendant le mois.
- */
 export function calculateSavedAmount(
-  savingsTransfers: Array<{
-    amount: number;
-    budgetMonthId?: string;
-  }>,
+  transfers: SavingsTransfer[],
   budgetMonthId?: string
 ): number {
-  return savingsTransfers
-    .filter(
-      (transfer) =>
-        !budgetMonthId ||
-        transfer.budgetMonthId ===
-          budgetMonthId
-    )
-    .reduce(
-      (total, transfer) =>
-        total +
-        safeAmount(transfer.amount),
-      0
-    );
+  if (!Array.isArray(transfers)) {
+    return 0;
+  }
+
+  return transfers.reduce(
+    (total, transfer) => {
+      if (
+        budgetMonthId !== undefined &&
+        transfer.budgetMonthId !== budgetMonthId
+      ) {
+        return total;
+      }
+
+      return total + safeAmount(transfer.amount);
+    },
+    0
+  );
 }
 
-/**
- * Calcule le montant restant après dépenses,
- * réserve et épargne.
- */
 export function calculateRemainingAmount(
   totalBudget: number,
   actualExpenses: number,
   reservedAmount: number,
   savedAmount: number
 ): number {
-  return Math.max(
-    0,
+  return (
     safeAmount(totalBudget) -
-      safeAmount(actualExpenses) -
-      safeAmount(reservedAmount) -
-      safeAmount(savedAmount)
+    safeAmount(actualExpenses) -
+    safeAmount(reservedAmount) -
+    safeAmount(savedAmount)
   );
 }
 
-/**
- * Calcule le montant restant attendu en tenant compte
- * des dépenses planifiées à venir.
- */
-export function calculateExpectedRemainingAmount(
-  remainingAmount: number,
-  plannedFutureExpenses: number
-): number {
-  return Math.max(
-    0,
-    safeAmount(remainingAmount) -
-      safeAmount(plannedFutureExpenses)
-  );
-}
-
-/**
- * Calcule le pourcentage du budget utilisé.
- */
 export function calculateBudgetUsedPercentage(
   totalBudget: number,
   actualExpenses: number
 ): number {
-  const budget = safeAmount(totalBudget);
+  const safeTotal =
+    safeAmount(totalBudget);
 
-  if (budget <= 0) {
+  if (safeTotal <= 0) {
     return 0;
   }
 
-  return Math.min(
-    100,
-    Math.max(
-      0,
-      (safeAmount(actualExpenses) /
-        budget) *
-        100
-    )
+  return clamp(
+    (safeAmount(actualExpenses) /
+      safeTotal) *
+      100,
+    0,
+    100
   );
 }
 
-/**
- * Calcule le pourcentage attendu du budget utilisé
- * après prise en compte des dépenses planifiées.
- */
-export function calculateExpectedBudgetUsedPercentage(
-  totalBudget: number,
-  actualExpenses: number,
-  plannedFutureExpenses: number
+/* =========================================================
+   DÉPENSES PLANIFIÉES
+   ========================================================= */
+
+export function calculatePlannedExpenses(
+  plannedExpenses: number
 ): number {
-  const budget = safeAmount(totalBudget);
-
-  if (budget <= 0) {
-    return 0;
-  }
-
-  const expectedExpenses =
-    safeAmount(actualExpenses) +
-    safeAmount(plannedFutureExpenses);
-
-  return Math.min(
-    100,
-    Math.max(
-      0,
-      (expectedExpenses / budget) * 100
-    )
-  );
+  return safeAmount(plannedExpenses);
 }
 
-/**
- * Calcule la limite quotidienne normale.
- */
-export function calculateDailyLimit(
-  remainingAmount: number,
-  daysRemaining: number
-): number {
-  const remaining =
-    safeAmount(remainingAmount);
-
-  const days = Math.max(
-    1,
-    Math.round(daysRemaining)
-  );
-
-  return Math.floor(
-    remaining / days
-  );
-}
+/* =========================================================
+   PRÉVISION DE FIN DE MOIS
+   ========================================================= */
 
 /**
- * Calcule la limite hebdomadaire normale.
- */
-export function calculateWeeklyLimit(
-  remainingAmount: number,
-  daysRemaining: number
-): number {
-  const remaining =
-    safeAmount(remainingAmount);
-
-  const days = Math.max(
-    1,
-    Math.round(daysRemaining)
-  );
-
-  return Math.floor(
-    (remaining / days) * 7
-  );
-}
-
-/**
- * Calcule une limite quotidienne sécurisée en conservant
- * un minimum de fin de mois.
- */
-export function calculateSecuredDailyLimit(
-  remainingAmount: number,
-  minimumEndBalance: number,
-  daysRemaining: number
-): number {
-  const remaining =
-    safeAmount(remainingAmount);
-
-  const minimum =
-    safeAmount(minimumEndBalance);
-
-  const days = Math.max(
-    1,
-    Math.round(daysRemaining)
-  );
-
-  const available =
-    Math.max(
-      0,
-      remaining - minimum
-    );
-
-  return Math.floor(
-    available / days
-  );
-}
-
-/**
- * Calcule une limite hebdomadaire sécurisée.
- */
-export function calculateSecuredWeeklyLimit(
-  remainingAmount: number,
-  minimumEndBalance: number,
-  daysRemaining: number
-): number {
-  const dailyLimit =
-    calculateSecuredDailyLimit(
-      remainingAmount,
-      minimumEndBalance,
-      daysRemaining
-    );
-
-  return dailyLimit * 7;
-}
-
-/**
- * Calcule la prévision du solde en fin de mois.
+ * Prévision de fin de mois.
  *
- * currentBalance = solde actuellement disponible.
- * currentExpenses = dépenses déjà réalisées.
- * daysElapsed = jours déjà écoulés.
- * daysRemaining = jours restants.
- * plannedFutureExpenses = dépenses futures connues.
+ * Signature utilisée par les tests :
  *
- * La moyenne journalière est calculée à partir des dépenses
- * déjà réalisées, puis projetée sur les jours restants.
+ * calculateForecastEndBalance(
+ *   remainingAmount,
+ *   actualExpenses,
+ *   daysElapsed,
+ *   daysRemaining,
+ *   plannedFutureExpenses
+ * )
+ *
+ * Le rythme actuel de dépense est estimé à partir
+ * des dépenses réelles déjà effectuées.
  */
 export function calculateForecastEndBalance(
-  currentBalance: number,
-  currentExpenses: number,
+  remainingAmount: number,
+  actualExpenses: number,
   daysElapsed: number,
   daysRemaining: number,
   plannedFutureExpenses: number
 ): number {
-  const balance =
-    safeAmount(currentBalance);
+  const safeRemaining =
+    safeAmount(remainingAmount);
 
-  const expenses =
-    safeAmount(currentExpenses);
+  const safeActual =
+    safeAmount(actualExpenses);
 
-  const elapsed = Math.max(
-    0,
-    Math.round(daysElapsed)
-  );
+  const safeElapsed =
+    Math.max(
+      0,
+      Math.round(daysElapsed)
+    );
 
-  const remaining = Math.max(
-    0,
-    Math.round(daysRemaining)
-  );
+  const safeRemainingDays =
+    Math.max(
+      0,
+      Math.round(daysRemaining)
+    );
 
-  const planned =
+  const safePlanned =
     safeAmount(
       plannedFutureExpenses
     );
 
-  if (remaining <= 0) {
+  if (safeRemainingDays <= 0) {
     return Math.max(
       0,
-      balance - planned
+      safeRemaining - safePlanned
     );
   }
 
-  const dailyAverage =
-    elapsed > 0
-      ? expenses / elapsed
+  const averageDailyExpense =
+    safeElapsed > 0
+      ? safeActual / safeElapsed
       : 0;
 
   const projectedAdditionalExpenses =
-    Math.round(
-      dailyAverage * remaining
-    );
+    averageDailyExpense *
+    safeRemainingDays;
 
-  return Math.max(
-    0,
-    balance -
+  return Math.round(
+    safeRemaining -
       projectedAdditionalExpenses -
-      planned
+      safePlanned
   );
 }
 
-/**
- * Détermine le niveau de risque budgétaire.
- */
+/* =========================================================
+   RISQUE
+   ========================================================= */
+
 export function calculateRiskLevel(
   remainingAmount: number,
   minimumEndBalance: number,
-  dailyLimit: number,
   forecastEndBalance: number
-): RiskLevel {
-  const remaining =
-    safeAmount(remainingAmount);
-
-  const minimum =
-    safeAmount(minimumEndBalance);
-
-  const daily =
-    safeAmount(dailyLimit);
-
-  const forecast =
-    safeAmount(forecastEndBalance);
-
+): "green" | "orange" | "red" {
   if (
-    remaining <= 0 ||
-    forecast < minimum ||
-    daily <= 0
+    remainingAmount < 0 ||
+    forecastEndBalance < 0
   ) {
     return "red";
   }
 
   if (
-    forecast <
-      minimum +
-        Math.max(
-          1,
-          Math.round(
-            minimum * 0.2
-          )
-        ) ||
-    daily <
-      Math.max(
-        1,
-        Math.round(
-          remaining * 0.02
-        )
-      )
+    remainingAmount <
+      safeAmount(minimumEndBalance) ||
+    forecastEndBalance <
+      safeAmount(minimumEndBalance)
   ) {
     return "orange";
   }
@@ -445,27 +384,83 @@ export function calculateRiskLevel(
   return "green";
 }
 
-/**
- * Calcule toutes les données financières du mois.
- *
- * Signature conservée compatible avec les tests existants :
- *
- * calculateBudget(
- *   budgetMonth,
- *   expenses,
- *   plannedFutureExpenses,
- *   savedAmount,
- *   currentDate,
- *   plannedTotalExpenses?
- * )
- */
+/* =========================================================
+   LIMITES DE DÉPENSE
+   ========================================================= */
+
+export function calculateDailyLimit(
+  remainingAmount: number,
+  daysRemaining: number
+): number {
+  if (daysRemaining <= 0) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.floor(
+      remainingAmount /
+        daysRemaining
+    )
+  );
+}
+
+export function calculateWeeklyLimit(
+  dailyLimit: number
+): number {
+  return Math.max(
+    0,
+    Math.floor(
+      dailyLimit * 7
+    )
+  );
+}
+
+export function calculateSecuredDailyLimit(
+  remainingAmount: number,
+  minimumEndBalance: number,
+  daysRemaining: number
+): number {
+  if (daysRemaining <= 0) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.floor(
+      (
+        remainingAmount -
+        safeAmount(
+          minimumEndBalance
+        )
+      ) /
+        daysRemaining
+    )
+  );
+}
+
+export function calculateSecuredWeeklyLimit(
+  securedDailyLimit: number
+): number {
+  return Math.max(
+    0,
+    Math.floor(
+      securedDailyLimit * 7
+    )
+  );
+}
+
+/* =========================================================
+   BUDGET COMPLET
+   ========================================================= */
+
 export function calculateBudget(
   budgetMonth: BudgetMonth,
   expenses: Expense[],
   plannedFutureExpenses: number,
   savedAmount: number,
   currentDate: Date,
-  plannedTotalExpenses?: number
+  totalPlannedMonthExpenses?: number
 ): BudgetCalculation {
   const totalBudget =
     calculateTotalBudget(
@@ -474,11 +469,20 @@ export function calculateBudget(
 
   const actualExpenses =
     calculateActualExpenses(
-      expenses.filter(
-        (expense) =>
-          expense.budgetMonthId ===
-          budgetMonth.id
-      )
+      expenses
+    );
+
+  /*
+   * Dépenses planifiées du mois utilisées
+   * pour calculer la variance.
+   *
+   * Si aucune valeur spécifique n'est fournie,
+   * on utilise les dépenses futures.
+   */
+  const plannedExpenses =
+    safeAmount(
+      totalPlannedMonthExpenses ??
+        plannedFutureExpenses
     );
 
   const reservedAmount =
@@ -486,7 +490,7 @@ export function calculateBudget(
       budgetMonth.reservedAmount
     );
 
-  const normalizedSavedAmount =
+  const safeSavedAmount =
     safeAmount(savedAmount);
 
   const remainingAmount =
@@ -494,26 +498,16 @@ export function calculateBudget(
       totalBudget,
       actualExpenses,
       reservedAmount,
-      normalizedSavedAmount
+      safeSavedAmount
     );
 
-  const normalizedPlannedFuture =
-    safeAmount(
-      plannedFutureExpenses
-    );
-
-  const expectedRemainingAmount =
-    calculateExpectedRemainingAmount(
-      remainingAmount,
-      normalizedPlannedFuture
+  const monthStart =
+    parseDate(
+      budgetMonth.startDate
     );
 
   const daysInMonth =
-    getDaysInMonth(
-      parseDate(
-        budgetMonth.startDate
-      )
-    );
+    getDaysInMonth(monthStart);
 
   const daysElapsed =
     getDaysElapsed(
@@ -535,8 +529,7 @@ export function calculateBudget(
 
   const weeklyLimit =
     calculateWeeklyLimit(
-      remainingAmount,
-      daysRemaining
+      dailyLimit
     );
 
   const securedDailyLimit =
@@ -548,9 +541,7 @@ export function calculateBudget(
 
   const securedWeeklyLimit =
     calculateSecuredWeeklyLimit(
-      remainingAmount,
-      budgetMonth.minimumEndBalance,
-      daysRemaining
+      securedDailyLimit
     );
 
   const budgetUsedPercentage =
@@ -559,39 +550,51 @@ export function calculateBudget(
       actualExpenses
     );
 
-  const expectedBudgetUsedPercentage =
-    calculateExpectedBudgetUsedPercentage(
-      totalBudget,
-      actualExpenses,
-      normalizedPlannedFuture
+  /*
+   * Montant restant après les dépenses
+   * qui sont encore prévues.
+   *
+   * Important :
+   * on ne soustrait pas les dépenses réelles
+   * une deuxième fois.
+   */
+  const expectedRemainingAmount =
+    Math.max(
+      0,
+      remainingAmount -
+        safeAmount(
+          plannedFutureExpenses
+        )
     );
 
+  const expectedBudgetUsedPercentage =
+    totalBudget > 0
+      ? clamp(
+          (
+            (
+              totalBudget -
+              expectedRemainingAmount
+            ) /
+            totalBudget
+          ) *
+            100,
+          0,
+          100
+        )
+      : 0;
+
+  /*
+   * Prévision réelle basée sur le rythme
+   * actuel des dépenses + dépenses futures.
+   */
   const forecastEndBalance =
     calculateForecastEndBalance(
       remainingAmount,
       actualExpenses,
       daysElapsed,
       daysRemaining,
-      normalizedPlannedFuture
+      plannedFutureExpenses
     );
-
-  const riskLevel =
-    calculateRiskLevel(
-      remainingAmount,
-      budgetMonth.minimumEndBalance,
-      dailyLimit,
-      forecastEndBalance
-    );
-
-  const varianceAmount =
-    safeAmount(
-      plannedTotalExpenses
-    ) > 0
-      ? actualExpenses -
-        safeAmount(
-          plannedTotalExpenses
-        )
-      : 0;
 
   const freeMoney =
     Math.max(
@@ -602,50 +605,80 @@ export function calculateBudget(
         )
     );
 
+  const riskLevel =
+    calculateRiskLevel(
+      remainingAmount,
+      budgetMonth.minimumEndBalance,
+      forecastEndBalance
+    );
+
+  const varianceAmount =
+    actualExpenses -
+    plannedExpenses;
+
   return {
-    initialBudget: safeAmount(
-      budgetMonth.initialBudget
-    ),
-    carryOver: safeAmount(
-      budgetMonth.carryOver
-    ),
-    totalBudget,
-    plannedExpenses:
+    initialBudget:
       safeAmount(
-        plannedTotalExpenses
+        budgetMonth.initialBudget
       ),
+
+    carryOver:
+      safeAmount(
+        budgetMonth.carryOver
+      ),
+
+    totalBudget,
+
+    plannedExpenses,
+
     actualExpenses,
+
     reservedAmount,
+
     savedAmount:
-      normalizedSavedAmount,
+      safeSavedAmount,
+
     remainingAmount,
+
     expectedRemainingAmount,
+
     varianceAmount,
+
     daysInMonth,
+
     daysElapsed,
+
     daysRemaining,
+
     freeMoney,
+
     dailyLimit,
+
     weeklyLimit,
+
     securedDailyLimit,
+
     securedWeeklyLimit,
+
     budgetUsedPercentage,
+
     expectedBudgetUsedPercentage,
+
     forecastEndBalance,
+
     riskLevel,
   };
 }
 
-/**
- * Génère trois scénarios de prévision.
- */
+/* =========================================================
+   SCÉNARIOS
+   ========================================================= */
+
 export function calculateForecastScenarios(
   calculation: BudgetCalculation
 ): ForecastScenario[] {
   const currentBalance =
-    safeAmount(
-      calculation.remainingAmount
-    );
+    calculation.remainingAmount;
 
   const daysRemaining =
     Math.max(
@@ -653,133 +686,199 @@ export function calculateForecastScenarios(
       calculation.daysRemaining
     );
 
-  const dailyAverage =
-    calculation.daysElapsed > 0
-      ? calculation.actualExpenses /
-        calculation.daysElapsed
-      : 0;
-
-  const optimisticAdditionalExpenses =
-    Math.round(
-      dailyAverage *
-        daysRemaining *
-        0.75
-    );
-
-  const probableAdditionalExpenses =
-    Math.round(
-      dailyAverage *
-        daysRemaining
-    );
-
-  const conservativeAdditionalExpenses =
-    Math.round(
-      dailyAverage *
-        daysRemaining *
-        1.25
-    );
-
-  const optimisticBalance =
+  const dailyLimit =
     Math.max(
       0,
-      currentBalance -
-        optimisticAdditionalExpenses
+      calculation.dailyLimit
     );
 
-  const probableBalance =
+  const probableAdditional =
     Math.max(
       0,
-      currentBalance -
-        probableAdditionalExpenses
+      dailyLimit * daysRemaining
     );
 
-  const conservativeBalance =
+  const optimisticAdditional =
     Math.max(
       0,
-      currentBalance -
-        conservativeAdditionalExpenses
+      probableAdditional * 0.7
+    );
+
+  const conservativeAdditional =
+    Math.max(
+      0,
+      probableAdditional * 1.3
     );
 
   return [
     {
       name: "optimistic",
+
       projectedEndBalance:
-        optimisticBalance,
+        Math.round(
+          currentBalance -
+            optimisticAdditional
+        ),
+
       projectedAdditionalExpenses:
-        optimisticAdditionalExpenses,
+        Math.round(
+          optimisticAdditional
+        ),
+
       description:
-        "Vous dépensez environ 25 % de moins que votre rythme actuel.",
+        "Dépenses maîtrisées et rythme inférieur à la limite quotidienne.",
     },
+
     {
       name: "probable",
+
       projectedEndBalance:
-        probableBalance,
+        Math.round(
+          currentBalance -
+            probableAdditional
+        ),
+
       projectedAdditionalExpenses:
-        probableAdditionalExpenses,
+        Math.round(
+          probableAdditional
+        ),
+
       description:
-        "Vous continuez à dépenser au rythme moyen observé.",
+        "Maintien du rythme de dépense actuel.",
     },
+
     {
       name: "conservative",
+
       projectedEndBalance:
-        conservativeBalance,
+        Math.round(
+          currentBalance -
+            conservativeAdditional
+        ),
+
       projectedAdditionalExpenses:
-        conservativeAdditionalExpenses,
+        Math.round(
+          conservativeAdditional
+        ),
+
       description:
-        "Vos dépenses augmentent d'environ 25 % par rapport au rythme actuel.",
+        "Rythme de dépense plus élevé que prévu.",
     },
   ];
 }
 
-/**
- * Calcule le mode économie.
- */
+/* =========================================================
+   MODE ÉCONOMIE
+   ========================================================= */
+
 export function calculateEconomyMode(
   calculation: BudgetCalculation,
   minimumEndBalance: number
 ): EconomyMode {
-  const minimum =
-    safeAmount(
-      minimumEndBalance
-    );
-
-  const maxAdditionalSpending =
-    Math.max(
-      0,
-      calculation.remainingAmount -
-        minimum
-    );
-
-  const progressPercentage =
-    maxAdditionalSpending > 0
-      ? Math.min(
-          100,
-          Math.max(
-            0,
-            (calculation.remainingAmount /
-              Math.max(
-                calculation.remainingAmount,
-                minimum
-              )) *
-              100
-          )
-        )
-      : calculation.remainingAmount >=
-          minimum
-        ? 100
-        : 0;
+  const safeMinimumEndBalance = safeAmount(minimumEndBalance);
+  const remainingAmount = safeAmount(calculation.remainingAmount);
+  const maxAdditionalSpending = Math.max(
+    0,
+    remainingAmount - safeMinimumEndBalance
+  );
+  const dailyLimit = calculateDailyLimit(
+    maxAdditionalSpending,
+    calculation.daysRemaining
+  );
 
   return {
-    enabled: true,
-    minimumEndBalance:
-      minimum,
+    enabled: remainingAmount >= safeMinimumEndBalance,
+    minimumEndBalance: safeMinimumEndBalance,
     maxAdditionalSpending,
-    dailyLimit:
-      calculation.securedDailyLimit,
-    weeklyLimit:
-      calculation.securedWeeklyLimit,
-    progressPercentage,
-    riskLevel:
-      calculation.riskLevel,
+    dailyLimit,
+    weeklyLimit: calculateWeeklyLimit(dailyLimit),
+    progressPercentage:
+      remainingAmount > 0
+        ? clamp(
+            (maxAdditionalSpending / remainingAmount) * 100,
+            0,
+            100
+          )
+        : 0,
+    riskLevel: calculateRiskLevel(
+      remainingAmount,
+      safeMinimumEndBalance,
+      calculation.forecastEndBalance
+    ),
+  };
+}
+
+export function calculateSimulation(
+  budgetMonth: BudgetMonth,
+  expenses: Expense[],
+  plannedExpenses: PlannedExpense[],
+  savingsTransfers: SavingsTransfer[],
+  simulatedExpense: number,
+  currentDate: Date
+): SimulationResult {
+  const safeSimulatedExpense = safeAmount(simulatedExpense);
+  const savedAmount = calculateSavedAmount(
+    savingsTransfers,
+    budgetMonth.id
+  );
+  const plannedFutureExpenses = Array.isArray(
+    plannedExpenses
+  )
+    ? plannedExpenses
+        .filter(
+          (expense) =>
+            expense.status === "planned"
+        )
+        .reduce(
+          (total, expense) =>
+            total + safeAmount(expense.amount),
+          0
+        )
+    : 0;
+  const calculation = calculateBudget(
+    budgetMonth,
+    expenses,
+    plannedFutureExpenses,
+    savedAmount,
+    currentDate
+  );
+  const balanceBefore = calculation.remainingAmount;
+  const balanceAfter = Math.max(
+    0,
+    balanceBefore - safeSimulatedExpense
+  );
+  const forecastEndBalance = calculateForecastEndBalance(
+    balanceAfter,
+    calculation.actualExpenses + safeSimulatedExpense,
+    calculation.daysElapsed,
+    calculation.daysRemaining,
+    plannedFutureExpenses
+  );
+  const dailyLimitAfter = calculateDailyLimit(
+    balanceAfter,
+    calculation.daysRemaining
+  );
+  const weeklyLimitAfter = calculateWeeklyLimit(
+    dailyLimitAfter
+  );
+
+  return {
+    simulatedExpense: safeSimulatedExpense,
+    balanceBefore,
+    balanceAfter,
+    forecastEndBalance,
+    dailyLimitAfter,
+    weeklyLimitAfter,
+    riskLevel: calculateRiskLevel(
+      balanceAfter,
+      budgetMonth.minimumEndBalance,
+      forecastEndBalance
+    ),
+    isAffordable:
+      balanceAfter >=
+        safeAmount(budgetMonth.minimumEndBalance) &&
+      forecastEndBalance >=
+        safeAmount(budgetMonth.minimumEndBalance),
+    generatedAt: new Date().toISOString(),
   };
 }

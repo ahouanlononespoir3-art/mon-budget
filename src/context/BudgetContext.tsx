@@ -10,11 +10,13 @@ import {
 
 import {
   addExpense as storageAddExpense,
+  addFuturePurchase as storageAddFuturePurchase,
   addPlannedExpense as storageAddPlannedExpense,
   addRecurringExpense as storageAddRecurringExpense,
   addSavingsGoal as storageAddSavingsGoal,
   addSavingsTransfer as storageAddSavingsTransfer,
   deleteExpense as storageDeleteExpense,
+  deleteFuturePurchase as storageDeleteFuturePurchase,
   deletePlannedExpense as storageDeletePlannedExpense,
   deleteRecurringExpense as storageDeleteRecurringExpense,
   deleteSavingsGoal as storageDeleteSavingsGoal,
@@ -22,19 +24,27 @@ import {
   getBudgetMonth,
   getCategories,
   getExpenses,
+  getFuturePurchases,
   getPlannedExpenses,
   getRecurringExpenses,
   getSavingsGoals,
   getSavingsTransfers,
+  getSettings,
   initializeDemoData,
+  savePlannedExpenses,
   saveBudgetMonth,
   saveCategories,
   updateExpense as storageUpdateExpense,
+  updateFuturePurchase as storageUpdateFuturePurchase,
   updatePlannedExpense as storageUpdatePlannedExpense,
   updateRecurringExpense as storageUpdateRecurringExpense,
   updateSavingsGoal as storageUpdateSavingsGoal,
   updateSavingsTransfer as storageUpdateSavingsTransfer,
 } from "../services/storage";
+
+import { performAutomaticMonthRollover } from "../services/monthService";
+
+import { generateRecurringExpenses } from "../services/recurringExpenseService";
 
 import {
   demoBudgetMonth,
@@ -50,6 +60,7 @@ import type {
   BudgetMonth,
   Category,
   Expense,
+  FuturePurchase,
   PlannedExpense,
   RecurringExpense,
   SavingsGoal,
@@ -64,6 +75,7 @@ interface BudgetContextValue {
   recurringExpenses: RecurringExpense[];
   savingsGoals: SavingsGoal[];
   savingsTransfers: SavingsTransfer[];
+  futurePurchases: FuturePurchase[];
 
   updateBudgetMonth: (
     budgetMonth: BudgetMonth
@@ -133,6 +145,10 @@ interface BudgetContextValue {
     transferId: string
   ) => void;
 
+  addFuturePurchase: (purchase: FuturePurchase) => void;
+  updateFuturePurchase: (purchase: FuturePurchase) => void;
+  deleteFuturePurchase: (purchaseId: string) => void;
+
   refreshData: () => void;
 }
 
@@ -189,9 +205,27 @@ export function BudgetProvider({
     demoSavingsTransfers
   );
 
+  const [futurePurchases, setFuturePurchases] =
+    useState<FuturePurchase[]>([]);
+
   const loadData = useCallback(() => {
-    const storedBudgetMonth =
-      getBudgetMonth();
+    const storedBudgetMonth = getBudgetMonth();
+    const settings = getSettings();
+    const baseBudgetMonth =
+      storedBudgetMonth ?? demoBudgetMonth;
+    let configuredBudgetMonth: BudgetMonth = {
+      ...baseBudgetMonth,
+      initialBudget: settings.usualMonthlyAmount,
+      minimumEndBalance: settings.minimumEndBalance,
+      totalBudget:
+        settings.usualMonthlyAmount +
+        Math.max(0, baseBudgetMonth.carryOver),
+    };
+
+    const rollover = performAutomaticMonthRollover(configuredBudgetMonth);
+    if (rollover.changed) {
+      configuredBudgetMonth = rollover.currentMonth;
+    }
 
     const storedCategories =
       getCategories();
@@ -211,10 +245,11 @@ export function BudgetProvider({
     const storedSavingsTransfers =
       getSavingsTransfers();
 
-    setBudgetMonth(
-      storedBudgetMonth ??
-        demoBudgetMonth
-    );
+    const storedFuturePurchases =
+      getFuturePurchases();
+
+    setBudgetMonth(configuredBudgetMonth);
+    saveBudgetMonth(configuredBudgetMonth);
 
     setCategories(
       storedCategories.length > 0
@@ -226,9 +261,21 @@ export function BudgetProvider({
       storedExpenses
     );
 
-    setPlannedExpenses(
-      storedPlannedExpenses
+    const generatedPlannedExpenses = generateRecurringExpenses(
+      {
+        budgetMonthId: configuredBudgetMonth.id,
+        monthStart: configuredBudgetMonth.startDate,
+        monthEnd: configuredBudgetMonth.endDate,
+        existingPlannedExpenses: storedPlannedExpenses,
+      },
+      storedRecurringExpenses
     );
+    const allPlannedExpenses = [
+      ...storedPlannedExpenses,
+      ...generatedPlannedExpenses,
+    ];
+    savePlannedExpenses(allPlannedExpenses);
+    setPlannedExpenses(allPlannedExpenses);
 
     setRecurringExpenses(
       storedRecurringExpenses
@@ -241,6 +288,8 @@ export function BudgetProvider({
     setSavingsTransfers(
       storedSavingsTransfers
     );
+
+    setFuturePurchases(storedFuturePurchases);
   }, []);
 
   useEffect(() => {
@@ -460,6 +509,27 @@ export function BudgetProvider({
       []
     );
 
+  const addFuturePurchase = useCallback(
+    (purchase: FuturePurchase) => {
+      setFuturePurchases(storageAddFuturePurchase(purchase));
+    },
+    []
+  );
+
+  const updateFuturePurchase = useCallback(
+    (purchase: FuturePurchase) => {
+      setFuturePurchases(storageUpdateFuturePurchase(purchase));
+    },
+    []
+  );
+
+  const deleteFuturePurchase = useCallback(
+    (purchaseId: string) => {
+      setFuturePurchases(storageDeleteFuturePurchase(purchaseId));
+    },
+    []
+  );
+
   const refreshData =
     useCallback(() => {
       loadData();
@@ -475,6 +545,7 @@ export function BudgetProvider({
         recurringExpenses,
         savingsGoals,
         savingsTransfers,
+        futurePurchases,
 
         updateBudgetMonth,
         updateCategories,
@@ -498,6 +569,10 @@ export function BudgetProvider({
         addSavingsTransfer,
         updateSavingsTransfer,
         deleteSavingsTransfer,
+
+        addFuturePurchase,
+        updateFuturePurchase,
+        deleteFuturePurchase,
 
         refreshData,
       }),
@@ -509,6 +584,7 @@ export function BudgetProvider({
         recurringExpenses,
         savingsGoals,
         savingsTransfers,
+        futurePurchases,
 
         updateBudgetMonth,
         updateCategories,
@@ -532,6 +608,10 @@ export function BudgetProvider({
         addSavingsTransfer,
         updateSavingsTransfer,
         deleteSavingsTransfer,
+
+        addFuturePurchase,
+        updateFuturePurchase,
+        deleteFuturePurchase,
 
         refreshData,
       ]

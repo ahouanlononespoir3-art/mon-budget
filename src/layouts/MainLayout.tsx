@@ -4,20 +4,24 @@ import {
   Menu,
   Plus,
   Receipt,
+  ShoppingCart,
   Target,
   X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 
 import {
   ExpenseForm,
   type ExpenseFormData,
 } from "../components/expenses/ExpenseForm";
+import { OfflineBanner } from "../components/ui/OfflineBanner";
+import { SyncStatus } from "../components/ui/SyncStatus";
 
 import { useBudget } from "../context/BudgetContext";
 
 import type { Expense } from "../types/finance";
+import { isOnboardingCompleted } from "../services/storage";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -123,8 +127,13 @@ export function MainLayout({
     setIsMobileMenuOpen(false);
   };
 
+  if (!isOnboardingCompleted()) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <OfflineBanner />
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
@@ -144,6 +153,10 @@ export function MainLayout({
               <p className="text-xs text-slate-500">
                 Assistant budgétaire
               </p>
+            </div>
+
+            <div className="hidden lg:block">
+              <SyncStatus />
             </div>
           </Link>
 
@@ -168,6 +181,18 @@ export function MainLayout({
                 );
               }
             )}
+
+            <Link
+              to="/future-purchases"
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                isActive("/future-purchases")
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <ShoppingCart size={18} />
+              Achats
+            </Link>
 
             <Link
               to="/more"
@@ -238,6 +263,19 @@ export function MainLayout({
                   );
                 }
               )}
+
+              <Link
+                to="/future-purchases"
+                onClick={closeMobileMenu}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium ${
+                  isActive("/future-purchases")
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <ShoppingCart size={19} />
+                Achats futurs
+              </Link>
 
               <Link
                 to="/more"

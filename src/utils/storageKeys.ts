@@ -6,6 +6,8 @@ export const STORAGE_KEYS = {
   recurringExpenses: "mon-budget:recurring-expenses",
   savingsGoals: "mon-budget:savings-goals",
   savingsTransfers: "mon-budget:savings-transfers",
+  futurePurchases: "mon-budget:future-purchases",
+  monthlyHistory: "mon-budget:monthly-summaries",
   settings: "mon-budget:settings",
   onboardingCompleted: "mon-budget:onboarding-completed",
 } as const;

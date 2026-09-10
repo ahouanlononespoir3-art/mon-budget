@@ -1,371 +1,382 @@
-import {
-  Plus,
-  Target,
-  TrendingUp,
-} from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Plus, Trash2, Pencil, CheckCircle2, PauseCircle } from "lucide-react";
 
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { useBudget } from "../../context/BudgetContext";
+import type { GoalStatus, SavingsGoal } from "../../types/finance";
+import { formatMoney } from "../../utils/formatMoney";
+import { createId } from "../../utils/id";
 
-function formatMoney(
-  amount: number
-): string {
-  return new Intl.NumberFormat(
-    "fr-FR",
-    {
-      maximumFractionDigits: 0,
-    }
-  ).format(Math.round(amount));
-}
+const statusLabels: Record<GoalStatus, string> = {
+  active: "Actif",
+  paused: "En pause",
+  achieved: "Atteint",
+  purchased: "Acheté",
+  cancelled: "Annulé",
+};
 
 export function Goals() {
   const {
-    budgetMonth,
     savingsGoals,
-    addSavingsTransfer,
+    addSavingsGoal,
+    updateSavingsGoal,
+    deleteSavingsGoal,
   } = useBudget();
 
-  const [selectedGoal, setSelectedGoal] =
-    useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [amount, setAmount] =
-    useState("");
+  const [name, setName] = useState("");
+  const [targetAmount, setTargetAmount] = useState("");
+  const [savedAmount, setSavedAmount] = useState("");
+  const [priority, setPriority] = useState("1");
+  const [targetDate, setTargetDate] = useState("");
+  const [note, setNote] = useState("");
 
-  const activeGoals =
-    savingsGoals
-      .filter(
-        (goal) =>
-          goal.status === "active"
-      )
-      .sort(
-        (a, b) =>
-          a.priority - b.priority
-      );
+  const activeGoals = useMemo(
+    () =>
+      savingsGoals
+        .filter((goal) => goal.status === "active" || goal.status === "paused")
+        .sort((a, b) => a.priority - b.priority),
+    [savingsGoals]
+  );
 
-  const handleAddSavings = () => {
-    if (!selectedGoal) {
+  const resetForm = () => {
+    setName("");
+    setTargetAmount("");
+    setSavedAmount("");
+    setPriority("1");
+    setTargetDate("");
+    setNote("");
+    setEditingId(null);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const openEdit = (goal: SavingsGoal) => {
+    setEditingId(goal.id);
+    setName(goal.name);
+    setTargetAmount(String(goal.targetAmount));
+    setSavedAmount(String(goal.savedAmount));
+    setPriority(String(goal.priority));
+    setTargetDate(goal.targetDate ?? "");
+    setNote(goal.note ?? "");
+    setShowForm(true);
+  };
+
+  const handleSubmit = () => {
+    const target = Math.max(0, Math.round(Number(targetAmount)));
+    const saved = Math.max(0, Math.min(target, Math.round(Number(savedAmount))));
+    const parsedPriority = Math.max(1, Math.round(Number(priority)));
+
+    if (!name.trim() || target <= 0) {
       return;
     }
 
-    const numericAmount =
-      Number(amount);
+    const now = new Date().toISOString();
 
-    if (
-      !Number.isFinite(
-        numericAmount
-      ) ||
-      numericAmount <= 0
-    ) {
-      return;
+    if (editingId) {
+      const current = savingsGoals.find((goal) => goal.id === editingId);
+
+      if (!current) {
+        return;
+      }
+
+      updateSavingsGoal({
+        ...current,
+        name: name.trim(),
+        targetAmount: target,
+        savedAmount: saved,
+        priority: parsedPriority,
+        targetDate: targetDate || null,
+        note: note.trim() || undefined,
+        status: saved >= target ? "achieved" : current.status,
+        updatedAt: now,
+      });
+    } else {
+      addSavingsGoal({
+        id: createId("goal"),
+        name: name.trim(),
+        targetAmount: target,
+        savedAmount: saved,
+        priority: parsedPriority,
+        status: saved >= target ? "achieved" : "active",
+        targetDate: targetDate || null,
+        note: note.trim() || undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
-    const goal =
-      savingsGoals.find(
-        (item) =>
-          item.id === selectedGoal
-      );
+    resetForm();
+    setShowForm(false);
+  };
 
-    if (!goal) {
-      return;
-    }
-
-    const remaining =
-      Math.max(
-        0,
-        goal.targetAmount -
-          goal.savedAmount
-      );
-
-    const amountToAdd =
-      Math.min(
-        Math.round(
-          numericAmount
-        ),
-        remaining
-      );
-
-    if (amountToAdd <= 0) {
-      return;
-    }
-
-    const now =
-      new Date().toISOString();
-
-    addSavingsTransfer({
-      id: crypto.randomUUID(),
-      budgetMonthId:
-        budgetMonth.id,
-      goalId: goal.id,
-      amount: amountToAdd,
-      date: new Date()
-        .toISOString()
-        .slice(0, 10),
-      note:
-        "Épargne ajoutée depuis les objectifs",
-      createdAt: now,
+  const togglePause = (goal: SavingsGoal) => {
+    updateSavingsGoal({
+      ...goal,
+      status: goal.status === "paused" ? "active" : "paused",
+      updatedAt: new Date().toISOString(),
     });
+  };
 
-    setAmount("");
-    setSelectedGoal(null);
+  const markAchieved = (goal: SavingsGoal) => {
+    updateSavingsGoal({
+      ...goal,
+      savedAmount: goal.targetAmount,
+      status: "achieved",
+      updatedAt: new Date().toISOString(),
+    });
   };
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm font-medium text-slate-500">
-          Épargne
-        </p>
-
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">
-          Objectifs
-        </h1>
-
-        <p className="mt-1 text-sm text-slate-500">
-          Transformez vos projets en objectifs
-          d'épargne concrets.
-        </p>
-      </header>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <Target className="text-slate-600" />
-
-          <p className="mt-4 text-sm text-slate-500">
-            Objectifs actifs
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Objectifs
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Construis progressivement ton épargne.
           </p>
+        </div>
 
-          <p className="mt-1 text-2xl font-bold">
-            {activeGoals.length}
-          </p>
-        </Card>
-
-        <Card>
-          <TrendingUp className="text-slate-600" />
-
-          <p className="mt-4 text-sm text-slate-500">
-            Total épargné
-          </p>
-
-          <p className="mt-1 text-2xl font-bold">
-            {formatMoney(
-              activeGoals.reduce(
-                (total, goal) =>
-                  total +
-                  goal.savedAmount,
-                0
-              )
-            )}{" "}
-            FCFA
-          </p>
-        </Card>
-
-        <Card>
-          <Target className="text-slate-600" />
-
-          <p className="mt-4 text-sm text-slate-500">
-            Montant cible
-          </p>
-
-          <p className="mt-1 text-2xl font-bold">
-            {formatMoney(
-              activeGoals.reduce(
-                (total, goal) =>
-                  total +
-                  goal.targetAmount,
-                0
-              )
-            )}{" "}
-            FCFA
-          </p>
-        </Card>
+        <Button onClick={openCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          Ajouter un objectif
+        </Button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {activeGoals.map(
-          (goal) => {
-            const progress =
-              goal.targetAmount >
-              0
-                ? Math.min(
-                    100,
-                    (goal.savedAmount /
-                      goal.targetAmount) *
-                      100
-                  )
-                : 0;
+      {showForm && (
+        <Card
+          title={editingId ? "Modifier l'objectif" : "Nouvel objectif"}
+          description="Définis précisément ce que tu souhaites financer."
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Nom
+              </label>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ex. Ordinateur"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
 
-            const remaining =
-              Math.max(
-                0,
-                goal.targetAmount -
-                  goal.savedAmount
-              );
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Montant cible
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={targetAmount}
+                onChange={(event) => setTargetAmount(event.target.value)}
+                placeholder="400000"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
 
-            return (
-              <Card
-                key={goal.id}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Priorité{" "}
-                      {goal.priority}
-                    </p>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Déjà épargné
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={savedAmount}
+                onChange={(event) => setSavedAmount(event.target.value)}
+                placeholder="0"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
 
-                    <h2 className="mt-1 text-xl font-bold text-slate-900">
-                      {goal.name}
-                    </h2>
-                  </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Priorité
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={priority}
+                onChange={(event) => setPriority(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
 
-                  <span className="text-lg font-bold">
-                    {Math.round(
-                      progress
-                    )}
-                    %
-                  </span>
-                </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Date cible
+              </label>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(event) => setTargetDate(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
 
-                <div className="mt-5">
-                  <ProgressBar
-                    value={
-                      progress
-                    }
-                  />
-                </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Note
+              </label>
+              <input
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder="Optionnel"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+          </div>
 
-                <div className="mt-4 flex justify-between text-sm">
-                  <span className="text-slate-500">
-                    {formatMoney(
-                      goal.savedAmount
-                    )}{" "}
-                    FCFA
-                  </span>
+          <div className="mt-5 flex justify-end gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                resetForm();
+                setShowForm(false);
+              }}
+            >
+              Annuler
+            </Button>
 
-                  <span className="font-semibold">
-                    {formatMoney(
-                      goal.targetAmount
-                    )}{" "}
-                    FCFA
-                  </span>
-                </div>
-
-                <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-                  Il reste{" "}
-                  <strong className="text-slate-900">
-                    {formatMoney(
-                      remaining
-                    )}{" "}
-                    FCFA
-                  </strong>{" "}
-                  à épargner.
-                </div>
-
-                <Button
-                  className="mt-5 w-full"
-                  variant="secondary"
-                  onClick={() =>
-                    setSelectedGoal(
-                      goal.id
-                    )
-                  }
-                >
-                  <Plus size={17} />
-                  Ajouter une épargne
-                </Button>
-              </Card>
-            );
-          }
-        )}
-      </div>
-
-      {activeGoals.length ===
-        0 && (
-        <Card className="py-12 text-center">
-          <Target
-            size={36}
-            className="mx-auto text-slate-400"
-          />
-
-          <h2 className="mt-4 font-semibold">
-            Aucun objectif actif
-          </h2>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Aucun objectif actif n'est
-            actuellement disponible.
-          </p>
+            <Button onClick={handleSubmit}>
+              Enregistrer
+            </Button>
+          </div>
         </Card>
       )}
 
-      {selectedGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <Card className="w-full max-w-md">
-            <h2 className="text-xl font-bold">
-              Ajouter une épargne
-            </h2>
+      <div className="grid gap-5 md:grid-cols-2">
+        {activeGoals.map((goal) => {
+          const percentage =
+            goal.targetAmount > 0
+              ? Math.min((goal.savedAmount / goal.targetAmount) * 100, 100)
+              : 0;
 
-            <p className="mt-2 text-sm text-slate-500">
-              Indiquez le montant que vous
-              souhaitez ajouter à cet objectif.
-            </p>
+          const remaining = Math.max(
+            0,
+            goal.targetAmount - goal.savedAmount
+          );
 
-            <div className="mt-5">
-              <label
-                htmlFor="goal-saving"
-                className="text-sm font-semibold"
-              >
-                Montant
-              </label>
+          return (
+            <Card key={goal.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-900">
+                      {goal.name}
+                    </h2>
 
-              <div className="mt-2 flex rounded-xl border border-slate-200 px-4">
-                <input
-                  id="goal-saving"
-                  type="number"
-                  min="1"
-                  value={amount}
-                  onChange={(event) =>
-                    setAmount(
-                      event.target.value
-                    )
-                  }
-                  className="w-full py-3 outline-none"
-                  placeholder="Ex. 10000"
-                />
+                    <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                      Priorité {goal.priority}
+                    </span>
+                  </div>
 
-                <span className="py-3 text-sm font-semibold text-slate-500">
-                  FCFA
-                </span>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {statusLabels[goal.status]}
+                  </p>
+                </div>
+
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    aria-label={`Modifier ${goal.name}`}
+                    onClick={() => openEdit(goal)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="small"
+                    aria-label={`Supprimer ${goal.name}`}
+                    onClick={() => deleteSavingsGoal(goal.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-5 flex gap-3">
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={() => {
-                  setSelectedGoal(
-                    null
-                  );
-                  setAmount("");
-                }}
-              >
-                Annuler
-              </Button>
+              <div className="mt-5">
+                <div className="mb-2 flex justify-between text-sm">
+                  <span className="text-slate-500">
+                    {formatMoney(goal.savedAmount)}
+                  </span>
+                  <strong className="text-slate-900">
+                    {formatMoney(goal.targetAmount)}
+                  </strong>
+                </div>
 
-              <Button
-                className="flex-1"
-                onClick={
-                  handleAddSavings
-                }
-              >
-                Épargner
-              </Button>
-            </div>
-          </Card>
-        </div>
+                <ProgressBar value={percentage} />
+
+                <div className="mt-2 flex justify-between text-xs text-slate-500">
+                  <span>{percentage.toFixed(1)} %</span>
+                  <span>Reste {formatMoney(remaining)}</span>
+                </div>
+              </div>
+
+              {goal.targetDate && (
+                <p className="mt-4 text-sm text-slate-500">
+                  Date cible : {goal.targetDate}
+                </p>
+              )}
+
+              {goal.note && (
+                <p className="mt-2 text-sm text-slate-500">
+                  {goal.note}
+                </p>
+              )}
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {goal.status !== "achieved" && (
+                  <>
+                    <Button
+                      size="small"
+                      onClick={() => markAchieved(goal)}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Atteint
+                    </Button>
+
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => togglePause(goal)}
+                    >
+                      <PauseCircle className="mr-2 h-4 w-4" />
+                      {goal.status === "paused" ? "Reprendre" : "Pause"}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {activeGoals.length === 0 && (
+        <Card>
+          <div className="py-10 text-center">
+            <p className="text-slate-500">
+              Aucun objectif pour le moment.
+            </p>
+            <Button className="mt-4" onClick={openCreate}>
+              Créer mon premier objectif
+            </Button>
+          </div>
+        </Card>
       )}
     </div>
   );

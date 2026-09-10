@@ -1,0 +1,68 @@
+import {
+  CheckCircle2,
+  Cloud,
+  CloudOff,
+  LoaderCircle,
+  RefreshCw,
+} from "lucide-react";
+
+import { useSync } from "../../context/SyncContext";
+
+export function SyncStatus() {
+  const { status, isOnline, lastSyncAt, syncNow } = useSync();
+
+  if (!isOnline) {
+    return (
+      <div className="inline-flex items-center gap-2 text-xs text-amber-600">
+        <CloudOff className="h-4 w-4" />
+        <span>Hors ligne</span>
+      </div>
+    );
+  }
+
+  if (status === "syncing") {
+    return (
+      <div className="inline-flex items-center gap-2 text-xs text-blue-600">
+        <LoaderCircle className="h-4 w-4 animate-spin" />
+        <span>Synchronisation...</span>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <button
+        type="button"
+        onClick={() => void syncNow()}
+        className="inline-flex items-center gap-2 text-xs text-red-600"
+      >
+        <RefreshCw className="h-4 w-4" />
+        <span>Synchronisation échouée</span>
+      </button>
+    );
+  }
+
+  if (status === "synced") {
+    return (
+      <div className="inline-flex items-center gap-2 text-xs text-emerald-600">
+        <CheckCircle2 className="h-4 w-4" />
+        <span>
+          Synchronisé
+          {lastSyncAt
+            ? ` • ${new Date(lastSyncAt).toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`
+            : ""}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-2 text-xs text-slate-500">
+      <Cloud className="h-4 w-4" />
+      <span>Prêt</span>
+    </div>
+  );
+}
