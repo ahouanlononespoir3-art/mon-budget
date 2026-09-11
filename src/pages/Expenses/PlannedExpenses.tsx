@@ -130,14 +130,14 @@ export function PlannedExpenses() {
                 <div>
                   <p className="font-semibold text-slate-900">{expense.name}</p>
                   <p className="mt-1 text-sm text-slate-500">{expense.plannedDate} · {statusLabels[expense.status]}</p>
-                  <p className="mt-1 text-sm">Prévu : <strong>{formatMoney(expense.amount)}</strong>{expense.actualAmount != null && <> · Réel : <strong>{formatMoney(expense.actualAmount)}</strong> · Écart : <strong className={difference && difference > 0 ? "text-red-600" : "text-emerald-600"}>{difference && difference > 0 ? "+" : ""}{formatMoney(difference)}</strong></>}</p>
+                  <p className="mt-1 text-sm">Prévu : <strong>{formatMoney(expense.amount)}</strong>{expense.actualAmount != null && <> · Réel : <strong>{formatMoney(expense.actualAmount)}</strong> · Écart : <strong className={difference && difference > 0 ? "text-red-600" : "text-emerald-600"}>{difference && difference > 0 ? "+" : ""}{formatMoney(difference ?? 0)}</strong></>}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {expense.status === "planned" && <Button size="small" onClick={() => markPaid(expense)}><Check className="mr-1 h-4 w-4" />Payée</Button>}
                   {expense.status === "planned" && <Button size="small" variant="secondary" onClick={() => updateStatus(expense, "postponed")}><RotateCcw className="mr-1 h-4 w-4" />Reporter</Button>}
                   {expense.status === "postponed" && <Button size="small" variant="secondary" onClick={() => updateStatus(expense, "planned")}>Réactiver</Button>}
                   {expense.status !== "paid" && <Button size="small" variant="ghost" onClick={() => updateStatus(expense, "cancelled")}><X className="h-4 w-4" /></Button>}
-                  <Button size="small" variant="danger" aria-label={`Supprimer ${expense.name}`} onClick={() => deletePlannedExpense(expense.id)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="small" variant="danger" aria-label={`Supprimer ${expense.name}`} onClick={() => expense.recurringExpenseId ? updateStatus(expense, "cancelled") : deletePlannedExpense(expense.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>;
             })}
