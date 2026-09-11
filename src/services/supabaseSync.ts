@@ -145,7 +145,7 @@ async function uploadCloudSnapshot(userId: string, snapshot: BudgetSnapshot) {
 }
 
 export async function synchronizeUserData(userId: string): Promise<{ snapshot: BudgetSnapshot; status: "synced" }> {
-  const localSnapshot = readUserSnapshotLocally(userId) ?? createSnapshot();
+  const localSnapshot = createSnapshot();
   const cloudSnapshot = await fetchCloudSnapshot(userId);
   const finalSnapshot = cloudSnapshot ? mergeSnapshots(localSnapshot, cloudSnapshot) : localSnapshot;
   writeLocalData(finalSnapshot.data);
