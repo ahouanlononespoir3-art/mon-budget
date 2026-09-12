@@ -138,10 +138,10 @@ export function Goals() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             Objectifs
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Construis progressivement ton épargne.
           </p>
         </div>
@@ -159,19 +159,19 @@ export function Goals() {
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Nom
               </label>
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Ex. Ordinateur"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Montant cible
               </label>
               <input
@@ -181,12 +181,12 @@ export function Goals() {
                 value={targetAmount}
                 onChange={(event) => setTargetAmount(event.target.value)}
                 placeholder="400000"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Déjà épargné
               </label>
               <input
@@ -196,12 +196,12 @@ export function Goals() {
                 value={savedAmount}
                 onChange={(event) => setSavedAmount(event.target.value)}
                 placeholder="0"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Priorité
               </label>
               <input
@@ -210,31 +210,31 @@ export function Goals() {
                 step="1"
                 value={priority}
                 onChange={(event) => setPriority(event.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Date cible
               </label>
               <input
                 type="date"
                 value={targetDate}
                 onChange={(event) => setTargetDate(event.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Note
               </label>
               <input
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 placeholder="Optionnel"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
           </div>
@@ -274,16 +274,16 @@ export function Goals() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-slate-900">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                       {goal.name}
                     </h2>
 
-                    <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                    <span className="rounded-full bg-blue-50 dark:bg-blue-950 px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
                       Priorité {goal.priority}
                     </span>
                   </div>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {statusLabels[goal.status]}
                   </p>
                 </div>
@@ -302,7 +302,14 @@ export function Goals() {
                     variant="danger"
                     size="small"
                     aria-label={`Supprimer ${goal.name}`}
-                    onClick={() => deleteSavingsGoal(goal.id)}
+                    onClick={() => {
+                      const confirmed = window.confirm(
+                        `Voulez-vous vraiment supprimer l'objectif "${goal.name}" ? L'épargne déjà enregistrée sera perdue.`
+                      );
+                      if (confirmed) {
+                        deleteSavingsGoal(goal.id);
+                      }
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -311,30 +318,30 @@ export function Goals() {
 
               <div className="mt-5">
                 <div className="mb-2 flex justify-between text-sm">
-                  <span className="text-slate-500">
+                  <span className="text-slate-500 dark:text-slate-400">
                     {formatMoney(goal.savedAmount)}
                   </span>
-                  <strong className="text-slate-900">
+                  <strong className="text-slate-900 dark:text-slate-100">
                     {formatMoney(goal.targetAmount)}
                   </strong>
                 </div>
 
                 <ProgressBar value={percentage} />
 
-                <div className="mt-2 flex justify-between text-xs text-slate-500">
+                <div className="mt-2 flex justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>{percentage.toFixed(1)} %</span>
                   <span>Reste {formatMoney(remaining)}</span>
                 </div>
               </div>
 
               {goal.targetDate && (
-                <p className="mt-4 text-sm text-slate-500">
+                <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
                   Date cible : {goal.targetDate}
                 </p>
               )}
 
               {goal.note && (
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                   {goal.note}
                 </p>
               )}
@@ -369,7 +376,7 @@ export function Goals() {
       {activeGoals.length === 0 && (
         <Card>
           <div className="py-10 text-center">
-            <p className="text-slate-500">
+            <p className="text-slate-500 dark:text-slate-400">
               Aucun objectif pour le moment.
             </p>
             <Button className="mt-4" onClick={openCreate}>

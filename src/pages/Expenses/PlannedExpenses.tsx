@@ -100,9 +100,9 @@ export function PlannedExpenses() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">Prévisionnel</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Dépenses planifiées</h1>
-          <p className="mt-1 text-sm text-slate-500">Prépare les sorties d'argent à venir et compare prévu avec réel.</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Prévisionnel</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Dépenses planifiées</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Prépare les sorties d'argent à venir et compare prévu avec réel.</p>
         </div>
         <Button onClick={() => setShowForm((visible) => !visible)}><Plus className="mr-2 h-4 w-4" />Ajouter</Button>
       </header>
@@ -110,34 +110,34 @@ export function PlannedExpenses() {
       {showForm && (
         <Card title="Nouvelle dépense prévue">
           <div className="grid gap-4 md:grid-cols-2">
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom" className="rounded-xl border border-slate-300 px-4 py-3" />
-            <input type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Montant prévu" className="rounded-xl border border-slate-300 px-4 py-3" />
-            <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="rounded-xl border border-slate-300 px-4 py-3">
+            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom" className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3" />
+            <input type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Montant prévu" className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3" />
+            <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3">
               {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select>
-            <input type="date" value={plannedDate} onChange={(event) => setPlannedDate(event.target.value)} className="rounded-xl border border-slate-300 px-4 py-3" />
+            <input type="date" value={plannedDate} onChange={(event) => setPlannedDate(event.target.value)} className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3" />
           </div>
           <div className="mt-4 flex justify-end gap-3"><Button variant="secondary" onClick={reset}>Annuler</Button><Button onClick={addPlanned}>Enregistrer</Button></div>
         </Card>
       )}
 
       <Card>
-        {items.length === 0 ? <p className="py-10 text-center text-sm text-slate-500">Aucune dépense planifiée pour ce mois.</p> : (
-          <div className="divide-y divide-slate-100">
+        {items.length === 0 ? <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">Aucune dépense planifiée pour ce mois.</p> : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {items.map((expense) => {
               const difference = expense.actualAmount == null ? null : expense.actualAmount - expense.amount;
               return <div key={expense.id} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-semibold text-slate-900">{expense.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">{expense.plannedDate} · {statusLabels[expense.status]}</p>
-                  <p className="mt-1 text-sm">Prévu : <strong>{formatMoney(expense.amount)}</strong>{expense.actualAmount != null && <> · Réel : <strong>{formatMoney(expense.actualAmount)}</strong> · Écart : <strong className={difference && difference > 0 ? "text-red-600" : "text-emerald-600"}>{difference && difference > 0 ? "+" : ""}{formatMoney(difference ?? 0)}</strong></>}</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{expense.name}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{expense.plannedDate} · {statusLabels[expense.status]}</p>
+                  <p className="mt-1 text-sm">Prévu : <strong>{formatMoney(expense.amount)}</strong>{expense.actualAmount != null && <> · Réel : <strong>{formatMoney(expense.actualAmount)}</strong> · Écart : <strong className={difference && difference > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}>{difference && difference > 0 ? "+" : ""}{formatMoney(difference ?? 0)}</strong></>}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {expense.status === "planned" && <Button size="small" onClick={() => markPaid(expense)}><Check className="mr-1 h-4 w-4" />Payée</Button>}
                   {expense.status === "planned" && <Button size="small" variant="secondary" onClick={() => updateStatus(expense, "postponed")}><RotateCcw className="mr-1 h-4 w-4" />Reporter</Button>}
                   {expense.status === "postponed" && <Button size="small" variant="secondary" onClick={() => updateStatus(expense, "planned")}>Réactiver</Button>}
                   {expense.status !== "paid" && <Button size="small" variant="ghost" onClick={() => updateStatus(expense, "cancelled")}><X className="h-4 w-4" /></Button>}
-                  <Button size="small" variant="danger" aria-label={`Supprimer ${expense.name}`} onClick={() => expense.recurringExpenseId ? updateStatus(expense, "cancelled") : deletePlannedExpense(expense.id)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="small" variant="danger" aria-label={`Supprimer ${expense.name}`} onClick={() => { if (window.confirm(`Voulez-vous vraiment supprimer "${expense.name}" ?`)) deletePlannedExpense(expense.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>;
             })}

@@ -81,9 +81,6 @@ function getNextOccurrence(
           return addDays(date, interval);
       }
     }
-
-    default:
-      return date;
   }
 }
 
@@ -96,7 +93,8 @@ function isSamePlannedOccurrence(
     existing.recurringExpenseId ===
       recurringExpenseId &&
     existing.plannedDate ===
-      plannedDate
+      plannedDate &&
+    existing.status !== "cancelled"
   );
 }
 

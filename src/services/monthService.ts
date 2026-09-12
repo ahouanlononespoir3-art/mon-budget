@@ -1,5 +1,3 @@
-import { addMonths, endOfMonth, startOfMonth } from "date-fns";
-
 import type { BudgetMonth, Expense, MonthlySummary, PlannedExpense, SavingsTransfer } from "../types/finance";
 import { addBudgetMonth, getBudgetMonths, getExpenses, getMonthlySummaries, getPlannedExpenses, getSavingsTransfers, saveBudgetMonth, saveBudgetMonths, saveMonthlySummaries } from "./storage";
 
@@ -62,8 +60,12 @@ export function createMonthlySummary(month: BudgetMonth, expenses: Expense[], pl
 }
 
 function createNextMonth(currentMonth: BudgetMonth, carryOver: number): BudgetMonth {
-  const nextStart = startOfMonth(addMonths(new Date(`${currentMonth.startDate}T00:00:00`), 1));
-  const nextEnd = endOfMonth(nextStart);
+  // Le cycle suivant commence le lendemain de la fin du cycle actuel, et dure
+  // un mois : cela conserve la date de depart choisie a l'inscription (ou dans
+  // les parametres), plutot que de toujours revenir au 1er du mois calendaire.
+  const nextStart = new Date(`${currentMonth.endDate}T00:00:00`);
+  nextStart.setDate(nextStart.getDate() + 1);
+  const nextEnd = new Date(nextStart.getFullYear(), nextStart.getMonth() + 1, nextStart.getDate() - 1);
   const now = new Date().toISOString();
   const initialBudget = Math.max(0, Math.round(currentMonth.initialBudget));
   const safeCarryOver = Math.max(0, Math.round(carryOver));

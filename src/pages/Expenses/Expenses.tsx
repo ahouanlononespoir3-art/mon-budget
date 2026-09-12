@@ -152,25 +152,25 @@ export function Expenses() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             Gestion
           </p>
 
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
             Dépenses
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Toutes les dépenses réellement enregistrées pour ce mois.
           </p>
         </div>
 
         <Card className="sm:min-w-56">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Dépenses du mois
           </p>
 
-          <p className="mt-1 text-xl font-bold text-slate-900">
+          <p className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
             {formatMoney(totalSpent)}
           </p>
         </Card>
@@ -179,19 +179,19 @@ export function Expenses() {
       <Card>
         <div className="grid gap-3 md:grid-cols-[1fr_180px_150px]">
           <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Rechercher une dépense"
-              className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-4 outline-none focus:border-blue-500"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 py-3 pl-10 pr-4 outline-none focus:border-blue-500"
             />
           </label>
-          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-3">
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-3">
             <option value="all">Toutes les catégories</option>
             {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
           </select>
-          <select value={period} onChange={(event) => setPeriod(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-3">
+          <select value={period} onChange={(event) => setPeriod(event.target.value)} className="rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-3">
             <option value="month">Ce mois</option>
             <option value="week">7 derniers jours</option>
             <option value="today">Aujourd'hui</option>
@@ -201,24 +201,24 @@ export function Expenses() {
 
       {monthExpenses.length === 0 ? (
         <Card className="flex min-h-64 flex-col items-center justify-center text-center">
-          <div className="rounded-2xl bg-slate-100 p-4">
+          <div className="rounded-2xl bg-slate-100 dark:bg-slate-700 p-4">
             <Receipt
               size={32}
-              className="text-slate-600"
+              className="text-slate-600 dark:text-slate-300"
             />
           </div>
 
-          <h2 className="mt-4 text-lg font-semibold text-slate-900">
+          <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
             Aucune dépense
           </h2>
 
-          <p className="mt-2 max-w-md text-sm text-slate-500">
+          <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
             Vous n'avez encore enregistré aucune dépense pour ce mois.
           </p>
         </Card>
       ) : (
         <Card className="overflow-hidden p-0">
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {monthExpenses.map(
               (expense) => {
                 const effectiveAmount =
@@ -234,21 +234,21 @@ export function Expenses() {
                     className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex min-w-0 items-start gap-3">
-                      <div className="mt-0.5 rounded-xl bg-slate-100 p-2.5">
+                      <div className="mt-0.5 rounded-xl bg-slate-100 dark:bg-slate-700 p-2.5">
                         <Receipt
                           size={18}
-                          className="text-slate-600"
+                          className="text-slate-600 dark:text-slate-300"
                         />
                       </div>
 
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900">
+                        <p className="truncate font-semibold text-slate-900 dark:text-slate-100">
                           {
                             expense.description
                           }
                         </p>
 
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                           <span>
                             {getCategoryName(
                               expense.categoryId
@@ -270,7 +270,7 @@ export function Expenses() {
                         </div>
 
                         {expense.note && (
-                          <p className="mt-2 text-sm text-slate-500">
+                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                             {
                               expense.note
                             }
@@ -280,7 +280,7 @@ export function Expenses() {
                     </div>
 
                     <div className="flex items-center justify-between gap-4 sm:justify-end">
-                      <p className="font-bold text-slate-900">
+                      <p className="font-bold text-slate-900 dark:text-slate-100">
                         {formatMoney(
                           effectiveAmount
                         )}

@@ -28,6 +28,14 @@ export interface BudgetDataSet {
   categories: Category[];
 }
 
+export interface CategoryBudgetStatus {
+  category: Category;
+  spent: number;
+  limit: number;
+  percentage: number;
+  remaining: number;
+}
+
 export interface BudgetViewModel {
   month: BudgetMonth;
 
@@ -38,6 +46,8 @@ export interface BudgetViewModel {
   economyMode: EconomyMode;
 
   monthExpenses: Expense[];
+
+  categoryBudgets: CategoryBudgetStatus[];
 
   recentExpenses: Expense[];
 
@@ -228,6 +238,46 @@ export function selectRecentExpenses(
   );
 }
 
+export function selectCategoryBudgetStatuses(
+  categories: Category[],
+  monthExpenses: Expense[]
+): CategoryBudgetStatus[] {
+  return categories
+    .filter(
+      (category) =>
+        category.active &&
+        category.monthlyLimit != null &&
+        category.monthlyLimit > 0
+    )
+    .map((category) => {
+      const limit = category.monthlyLimit as number;
+
+      const spent = monthExpenses
+        .filter(
+          (expense) =>
+            expense.categoryId === category.id
+        )
+        .reduce(
+          (total, expense) =>
+            total +
+            Math.max(
+              0,
+              expense.amount - expense.refundedAmount
+            ),
+          0
+        );
+
+      return {
+        category,
+        spent,
+        limit,
+        percentage: Math.round((spent / limit) * 100),
+        remaining: limit - spent,
+      };
+    })
+    .sort((a, b) => b.percentage - a.percentage);
+}
+
 export function selectBudgetViewModel(
   data: BudgetDataSet,
   currentDate: Date = new Date()
@@ -320,6 +370,12 @@ export function selectBudgetViewModel(
       monthExpenses
     );
 
+  const categoryBudgets =
+    selectCategoryBudgetStatuses(
+      data.categories,
+      monthExpenses
+    );
+
   return {
     month:
       data.budgetMonth,
@@ -331,6 +387,8 @@ export function selectBudgetViewModel(
     economyMode,
 
     monthExpenses,
+
+    categoryBudgets,
 
     recentExpenses,
 

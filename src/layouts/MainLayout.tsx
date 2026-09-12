@@ -6,7 +6,6 @@ import {
   Receipt,
   ShoppingCart,
   Target,
-  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
@@ -17,7 +16,6 @@ import {
 } from "../components/expenses/ExpenseForm";
 import { OfflineBanner } from "../components/ui/OfflineBanner";
 import { InstallPrompt } from "../components/ui/InstallPrompt";
-import { SyncStatus } from "../components/ui/SyncStatus";
 
 import { useBudget } from "../context/BudgetContext";
 
@@ -86,11 +84,6 @@ export function MainLayout({
     setIsExpenseFormOpen,
   ] = useState(false);
 
-  const [
-    isMobileMenuOpen,
-    setIsMobileMenuOpen,
-  ] = useState(false);
-
   const handleExpenseSubmit = (
     data: ExpenseFormData
   ) => {
@@ -124,47 +117,34 @@ export function MainLayout({
     return location.pathname.startsWith(path);
   };
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
   if (!isOnboardingCompleted()) {
     return <Navigate to="/onboarding" replace />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <OfflineBanner />
       <InstallPrompt />
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            onClick={closeMobileMenu}
             className="flex items-center gap-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 dark:bg-slate-700 text-white">
               <WalletIcon />
             </div>
 
             <div className="hidden sm:block">
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 Mon Budget
               </p>
 
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Assistant budgétaire
               </p>
             </div>
-
-            <div className="hidden lg:block">
-              <SyncStatus />
-            </div>
           </Link>
-
-          <div className="mr-2 lg:hidden">
-            <SyncStatus />
-          </div>
 
           <nav className="hidden items-center gap-1 md:flex">
             {navigationItems.map(
@@ -177,8 +157,8 @@ export function MainLayout({
                     to={item.path}
                     className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
                       isActive(item.path)
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        ? "bg-slate-900 dark:bg-slate-700 text-white"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
                     }`}
                   >
                     <Icon size={18} />
@@ -192,8 +172,8 @@ export function MainLayout({
               to="/future-purchases"
               className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
                 isActive("/future-purchases")
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? "bg-slate-900 dark:bg-slate-700 text-white"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
               <ShoppingCart size={18} />
@@ -204,8 +184,8 @@ export function MainLayout({
               to="/more"
               className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
                 isActive("/more")
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? "bg-slate-900 dark:bg-slate-700 text-white"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >
               Plus
@@ -217,106 +197,20 @@ export function MainLayout({
             onClick={() =>
               setIsExpenseFormOpen(true)
             }
-            className="hidden items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 md:flex"
+            className="hidden items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 dark:hover:bg-slate-600 md:flex"
           >
             <Plus size={18} />
             Ajouter
           </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              setIsMobileMenuOpen(
-                (open) => !open
-              )
-            }
-            aria-label={
-              isMobileMenuOpen
-                ? "Fermer le menu"
-                : "Ouvrir le menu"
-            }
-            className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-          >
-            {isMobileMenuOpen ? (
-              <X size={22} />
-            ) : (
-              <Menu size={22} />
-            )}
-          </button>
         </div>
-
-        {isMobileMenuOpen && (
-          <div className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
-            <nav className="space-y-1">
-              {navigationItems.map(
-                (item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={closeMobileMenu}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium ${
-                        isActive(item.path)
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-600 hover:bg-slate-100"
-                      }`}
-                    >
-                      <Icon size={19} />
-                      {item.label}
-                    </Link>
-                  );
-                }
-              )}
-
-              <Link
-                to="/future-purchases"
-                onClick={closeMobileMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium ${
-                  isActive("/future-purchases")
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <ShoppingCart size={19} />
-                Achats futurs
-              </Link>
-
-              <Link
-                to="/more"
-                onClick={closeMobileMenu}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium ${
-                  isActive("/more")
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Menu size={19} />
-                Plus
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  setIsExpenseFormOpen(true);
-                }}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
-              >
-                <Plus size={19} />
-                Ajouter une dépense
-              </button>
-            </nav>
-          </div>
-        )}
       </header>
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-8">
         {children}
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur md:hidden">
         <div className="relative mx-auto flex h-16 max-w-lg items-center justify-around px-2">
           <MobileNavigationLink
             to="/"
@@ -338,7 +232,7 @@ export function MainLayout({
               setIsExpenseFormOpen(true)
             }
             aria-label="Ajouter une dépense"
-            className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg ring-4 ring-white"
+            className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900 dark:bg-slate-700 text-white shadow-lg ring-4 ring-white dark:ring-slate-800"
           >
             <Plus size={25} />
           </button>
@@ -392,8 +286,8 @@ function MobileNavigationLink({
       to={to}
       className={`flex min-w-16 flex-col items-center gap-1 rounded-xl px-2 py-1 text-[11px] font-medium ${
         active
-          ? "text-slate-900"
-          : "text-slate-400"
+          ? "text-slate-900 dark:text-slate-100"
+          : "text-slate-400 dark:text-slate-500"
       }`}
     >
       <Icon size={19} />
@@ -405,7 +299,7 @@ function MobileNavigationLink({
 function WalletIcon() {
   return (
     <div className="relative h-5 w-6 rounded-md border-2 border-white">
-      <div className="absolute -right-1 top-1 h-2 w-2 rounded-full bg-white" />
+      <div className="absolute -right-1 top-1 h-2 w-2 rounded-full bg-white dark:bg-slate-800" />
     </div>
   );
 }

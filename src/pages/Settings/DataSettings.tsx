@@ -43,11 +43,11 @@ export function DataSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Mes données
         </h1>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Sauvegarde une copie de tes données.
         </p>
       </div>
@@ -77,7 +77,7 @@ export function DataSettings() {
           </Button>
           <input ref={inputRef} type="file" accept="application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importFile(file); }} />
         </div>
-        {message && <p className="mt-4 text-sm font-medium text-slate-600">{message}</p>}
+        {message && <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">{message}</p>}
       </Card>
 
       <Card title="Zone sensible" description="Cette action efface toutes les données enregistrées sur cet appareil.">

@@ -14,8 +14,9 @@ import { useBudget } from "./BudgetContext";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import {
   clearBusinessLocalData,
+  pullCloudData,
+  pushLocalData,
   saveCurrentUserCache,
-  synchronizeUserData,
   type SyncStatus,
 } from "../services/supabaseSync";
 
@@ -39,6 +40,35 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const previousUserId = useRef<string | null>(null);
   const syncing = useRef(false);
 
+  // pullNow : recupere les donnees du cloud et les copie dans le stockage local.
+  // Utilisee une seule fois, juste apres la connexion (l'appareil local peut etre vide).
+  const pullNow = useCallback(async () => {
+    if (!user || authLoading) return;
+    if (!isOnline) {
+      setStatus("offline");
+      return;
+    }
+    if (syncing.current) return;
+    syncing.current = true;
+    setStatus("syncing");
+    setError(null);
+    try {
+      const snapshot = await pullCloudData(user.id);
+      setLastSyncAt(snapshot?.updatedAt ?? new Date().toISOString());
+      setStatus("synced");
+      refreshData();
+    } catch (syncError) {
+      console.error("Erreur de recuperation Supabase:", syncError);
+      setStatus("error");
+      setError(syncError instanceof Error ? syncError.message : "Erreur de synchronisation.");
+    } finally {
+      syncing.current = false;
+    }
+  }, [user, authLoading, isOnline, refreshData]);
+
+  // syncNow : envoie les donnees locales actuelles vers le cloud. Utilisee a chaque
+  // modification (ajout/edition/suppression) et toutes les 60s. Elle ne reecrit jamais
+  // le stockage local : un element supprime localement ne peut donc plus "revenir".
   const syncNow = useCallback(async () => {
     if (!user || authLoading) return;
     if (!isOnline) {
@@ -50,10 +80,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setStatus("syncing");
     setError(null);
     try {
-      const result = await synchronizeUserData(user.id);
-      setLastSyncAt(result.snapshot.updatedAt);
+      const snapshot = await pushLocalData(user.id);
+      setLastSyncAt(snapshot.updatedAt);
       setStatus("synced");
-      refreshData();
     } catch (syncError) {
       console.error("Erreur synchronisation Supabase:", syncError);
       setStatus("error");
@@ -61,7 +90,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     } finally {
       syncing.current = false;
     }
-  }, [user, authLoading, isOnline, refreshData]);
+  }, [user, authLoading, isOnline]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -85,14 +114,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         setLastSyncAt(null);
         setError(null);
       } else if (isOnline) {
-        await syncNow();
+        await pullNow();
       } else {
         setStatus("offline");
       }
     }
 
     void handleUserChange();
-  }, [user, authLoading, isOnline, refreshData, syncNow]);
+  }, [user, authLoading, isOnline, refreshData, pullNow]);
 
   useEffect(() => {
     if (user && isOnline && status === "offline") void syncNow();

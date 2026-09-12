@@ -54,11 +54,11 @@ export function Simulator() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Simulateur
         </h1>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Vérifie l'impact d'une dépense avant de
           la faire.
         </p>
@@ -79,10 +79,10 @@ export function Simulator() {
                 setAmount(event.target.value)
               }
               placeholder="100000"
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-20 text-lg font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 pr-20 text-lg font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
 
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 dark:text-slate-400">
               {getCurrencyLabel(getStoredCurrency()).split(" — ")[0]}
             </span>
           </div>
@@ -101,19 +101,19 @@ export function Simulator() {
         <Card title="Résultat">
           <div className="flex items-center gap-3">
             {result.isAffordable ? (
-              <ShieldCheck className="h-8 w-8 text-emerald-600" />
+              <ShieldCheck className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             ) : (
-              <ShieldAlert className="h-8 w-8 text-red-600" />
+              <ShieldAlert className="h-8 w-8 text-red-600 dark:text-red-400" />
             )}
 
             <div>
-              <p className="font-bold text-slate-900">
+              <p className="font-bold text-slate-900 dark:text-slate-100">
                 {result.isAffordable
                   ? "Dépense potentiellement supportable"
                   : "Dépense déconseillée"}
               </p>
 
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Niveau de risque :{" "}
                 {result.riskLevel}
               </p>
@@ -121,8 +121,8 @@ export function Simulator() {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Solde avant
               </p>
 
@@ -133,8 +133,8 @@ export function Simulator() {
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Solde après
               </p>
 
@@ -145,8 +145,8 @@ export function Simulator() {
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Prévision fin de mois
               </p>
 
@@ -157,8 +157,8 @@ export function Simulator() {
               </p>
             </div>
 
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Nouvelle limite quotidienne
               </p>
 

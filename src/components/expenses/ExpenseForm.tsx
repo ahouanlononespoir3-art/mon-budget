@@ -90,15 +90,15 @@ export function ExpenseForm({
       <Card className="w-full rounded-b-none p-5 sm:max-w-lg sm:rounded-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
               Nouvelle opération
             </p>
 
-            <h2 className="mt-1 text-xl font-bold text-slate-900">
+            <h2 className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100">
               {title}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Enregistrez une dépense réellement effectuée.
             </p>
           </div>
@@ -107,19 +107,19 @@ export function ExpenseForm({
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-xl p-2 text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
           >
             <X size={20} />
           </button>
         </div>
 
         {activeCategories.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm font-semibold text-amber-900">
+          <div className="mt-6 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 p-4">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">
               Aucune catégorie disponible
             </p>
 
-            <p className="mt-1 text-sm text-amber-700">
+            <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
               Activez au moins une catégorie avant d&apos;enregistrer
               une dépense.
             </p>
@@ -142,12 +142,12 @@ export function ExpenseForm({
             <div>
               <label
                 htmlFor="expense-amount"
-                className="text-sm font-semibold text-slate-700"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Montant
               </label>
 
-              <div className="mt-2 flex items-center rounded-xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-100">
+              <div className="mt-2 flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 transition focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-100">
                 <input
                   id="expense-amount"
                   type="number"
@@ -161,13 +161,13 @@ export function ExpenseForm({
                   className="w-full bg-transparent py-3 text-lg font-semibold outline-none"
                 />
 
-                <span className="text-sm font-semibold text-slate-500">
+                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                     {getCurrencyLabel(getStoredCurrency()).split(" — ")[0]}
                 </span>
               </div>
 
               {errors.amount && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.amount.message}
                 </p>
               )}
@@ -176,7 +176,7 @@ export function ExpenseForm({
             <div>
               <label
                 htmlFor="expense-description"
-                className="text-sm font-semibold text-slate-700"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Description
               </label>
@@ -186,11 +186,11 @@ export function ExpenseForm({
                 type="text"
                 placeholder="Ex. Déjeuner"
                 {...register("description")}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                className="mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-100 dark:focus:ring-slate-800"
               />
 
               {errors.description && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.description.message}
                 </p>
               )}
@@ -199,7 +199,7 @@ export function ExpenseForm({
             <div>
               <label
                 htmlFor="expense-category"
-                className="text-sm font-semibold text-slate-700"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Catégorie
               </label>
@@ -207,7 +207,7 @@ export function ExpenseForm({
               <select
                 id="expense-category"
                 {...register("categoryId")}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                className="mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 outline-none transition focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-100 dark:focus:ring-slate-800"
               >
                 {activeCategories.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -217,7 +217,7 @@ export function ExpenseForm({
               </select>
 
               {errors.categoryId && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.categoryId.message}
                 </p>
               )}
@@ -226,7 +226,7 @@ export function ExpenseForm({
             <div>
               <label
                 htmlFor="expense-date"
-                className="text-sm font-semibold text-slate-700"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Date
               </label>
@@ -234,19 +234,19 @@ export function ExpenseForm({
               <div className="relative mt-2">
                 <CalendarDays
                   size={18}
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
                 />
 
                 <input
                   id="expense-date"
                   type="date"
                   {...register("date")}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 pl-11 pr-4 outline-none transition focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-100 dark:focus:ring-slate-800"
                 />
               </div>
 
               {errors.date && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.date.message}
                 </p>
               )}
@@ -255,10 +255,10 @@ export function ExpenseForm({
             <div>
               <label
                 htmlFor="expense-note"
-                className="text-sm font-semibold text-slate-700"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Note
-                <span className="ml-1 font-normal text-slate-400">
+                <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">
                   (facultatif)
                 </span>
               </label>
@@ -268,17 +268,17 @@ export function ExpenseForm({
                 rows={3}
                 placeholder="Ajoutez une précision si nécessaire..."
                 {...register("note")}
-                className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                className="mt-2 w-full resize-none rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-slate-400 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-100 dark:focus:ring-slate-800"
               />
 
               {errors.note && (
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.note.message}
                 </p>
               )}
             </div>
 
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 dark:border-slate-800 pt-5 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="secondary"

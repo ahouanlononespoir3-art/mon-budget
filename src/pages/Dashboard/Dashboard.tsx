@@ -3,6 +3,7 @@ import {
   ArrowDownRight,
   CalendarDays,
   CheckCircle2,
+  PieChart,
   PiggyBank,
   ShieldCheck,
   Target,
@@ -56,13 +57,13 @@ function getRiskClasses(
 ): string {
   switch (riskLevel) {
     case "green":
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
+      return "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-800";
     case "orange":
-      return "border-amber-200 bg-amber-50 text-amber-800";
+      return "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950 text-amber-800";
     case "red":
-      return "border-red-200 bg-red-50 text-red-800";
+      return "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 text-red-800";
     default:
-      return "border-slate-200 bg-slate-50 text-slate-700";
+      return "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300";
   }
 }
 
@@ -93,6 +94,7 @@ export function Dashboard() {
     recentExpenses,
     economyMode,
     activeGoals,
+    categoryBudgets,
   } = viewModel;
 
   const {
@@ -130,15 +132,15 @@ export function Dashboard() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
             Vue d'ensemble
           </p>
 
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Mon Budget
           </h1>
 
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Pilotez votre argent avec une vision claire du réel et du prévisionnel.
           </p>
         </div>
@@ -161,18 +163,18 @@ export function Dashboard() {
       <Card className="overflow-hidden">
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Wallet size={17} />
               Argent actuellement disponible
             </div>
 
-            <p className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+            <p className="mt-3 text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl">
               {formatMoney(
                 remainingAmount
               )}
             </p>
 
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Après dépenses réelles, réserve et épargne.
             </p>
 
@@ -236,26 +238,95 @@ export function Dashboard() {
         />
       </div>
 
+      <Card>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Budget par catégorie
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Ce que vous avez dépensé ce mois-ci par rapport à vos limites.
+            </p>
+          </div>
+
+          <PieChart
+            size={21}
+            className="text-slate-500 dark:text-slate-400"
+          />
+        </div>
+
+        <div className="mt-5 space-y-5">
+          {categoryBudgets.map((status) => {
+            const barColorClassName =
+              status.percentage >= 100
+                ? "bg-red-600"
+                : status.percentage >= 80
+                  ? "bg-amber-500"
+                  : "bg-emerald-600";
+
+            const textColorClassName =
+              status.percentage >= 100
+                ? "text-red-600 dark:text-red-400"
+                : status.percentage >= 80
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-emerald-600 dark:text-emerald-400";
+
+            return (
+              <div key={status.category.id}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {status.category.name}
+                  </span>
+
+                  <span className={`text-sm font-semibold ${textColorClassName}`}>
+                    {formatMoney(status.spent)} / {formatMoney(status.limit)}
+                  </span>
+                </div>
+
+                <div className="mt-2">
+                  <ProgressBar
+                    value={status.spent}
+                    max={status.limit}
+                    barColorClassName={barColorClassName}
+                  />
+                </div>
+
+                {status.percentage >= 100 && (
+                  <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+                    Dépassement de {formatMoney(Math.abs(status.remaining))}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+
+          {categoryBudgets.length === 0 && (
+            <EmptyState text="Ajoute une limite mensuelle à une catégorie (dans Catégories) pour la suivre ici." />
+          )}
+        </div>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Prévision de fin de mois
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Estimation basée sur votre rythme actuel.
               </p>
             </div>
 
             <PiggyBank
               size={21}
-              className="text-slate-500"
+              className="text-slate-500 dark:text-slate-400"
             />
           </div>
 
-          <p className="mt-5 text-3xl font-bold text-slate-900">
+          <p className="mt-5 text-3xl font-bold text-slate-900 dark:text-slate-100">
             {formatMoney(
               forecastEndBalance
             )}
@@ -282,18 +353,18 @@ export function Dashboard() {
         <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Réel vs prévu
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Le montant que vous devriez conserver après vos dépenses connues.
               </p>
             </div>
 
             <Target
               size={21}
-              className="text-slate-500"
+              className="text-slate-500 dark:text-slate-400"
             />
           </div>
 
@@ -321,18 +392,18 @@ export function Dashboard() {
       <Card>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               Mode économie
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Protège votre minimum de fin de mois.
             </p>
           </div>
 
           <ShieldCheck
             size={21}
-            className="text-slate-500"
+            className="text-slate-500 dark:text-slate-400"
           />
         </div>
 
@@ -346,9 +417,9 @@ export function Dashboard() {
               showLabel
             />
 
-            <p className="mt-3 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
               Dépense supplémentaire maximale recommandée :{" "}
-              <span className="font-semibold text-slate-900">
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {formatMoney(
                   economyMode.maxAdditionalSpending
                 )}
@@ -356,12 +427,12 @@ export function Dashboard() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-5 lg:min-w-64">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <div className="rounded-2xl bg-slate-50 dark:bg-slate-900 p-5 lg:min-w-64">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Minimum protégé
             </p>
 
-            <p className="mt-2 text-xl font-bold text-slate-900">
+            <p className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">
               {formatMoney(
                 economyMode.minimumEndBalance
               )}
@@ -374,18 +445,18 @@ export function Dashboard() {
         <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Prochaines dépenses
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Dépenses prévues qui peuvent réduire votre marge.
               </p>
             </div>
 
             <CalendarDays
               size={21}
-              className="text-slate-500"
+              className="text-slate-500 dark:text-slate-400"
             />
           </div>
 
@@ -404,14 +475,14 @@ export function Dashboard() {
                   return (
                     <div
                       key={expense.id}
-                      className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-3"
+                      className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 dark:bg-slate-900 p-3"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900">
+                        <p className="truncate font-semibold text-slate-900 dark:text-slate-100">
                           {expense.name}
                         </p>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                           {formatDate(
                             expense.plannedDate
                           )}
@@ -421,7 +492,7 @@ export function Dashboard() {
                         </p>
                       </div>
 
-                      <p className="shrink-0 font-bold text-slate-900">
+                      <p className="shrink-0 font-bold text-slate-900 dark:text-slate-100">
                         {formatMoney(
                           expense.amount
                         )}
@@ -441,18 +512,18 @@ export function Dashboard() {
         <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Dernières dépenses
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Vos opérations récentes.
               </p>
             </div>
 
             <Wallet
               size={21}
-              className="text-slate-500"
+              className="text-slate-500 dark:text-slate-400"
             />
           </div>
 
@@ -478,14 +549,14 @@ export function Dashboard() {
                   return (
                     <div
                       key={expense.id}
-                      className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-3"
+                      className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 dark:bg-slate-900 p-3"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900">
+                        <p className="truncate font-semibold text-slate-900 dark:text-slate-100">
                           {expense.description}
                         </p>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                           {formatDate(
                             expense.date
                           )}
@@ -495,7 +566,7 @@ export function Dashboard() {
                         </p>
                       </div>
 
-                      <p className="shrink-0 font-bold text-slate-900">
+                      <p className="shrink-0 font-bold text-slate-900 dark:text-slate-100">
                         {formatMoney(
                           effectiveAmount
                         )}
@@ -516,18 +587,18 @@ export function Dashboard() {
       <Card>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               Objectif prioritaire
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Gardez votre objectif principal visible.
             </p>
           </div>
 
           <Target
             size={21}
-            className="text-slate-500"
+            className="text-slate-500 dark:text-slate-400"
           />
         </div>
 
@@ -535,11 +606,11 @@ export function Dashboard() {
           <div className="mt-5">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-xl font-bold text-slate-900">
+                <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
                   {priorityGoal.name}
                 </p>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {formatMoney(
                     priorityGoal.savedAmount
                   )}{" "}
@@ -550,7 +621,7 @@ export function Dashboard() {
                 </p>
               </div>
 
-              <p className="text-lg font-bold text-slate-900">
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 {Math.round(
                   Math.min(
                     100,
@@ -620,12 +691,12 @@ function InfoStat({
   value,
 }: InfoStatProps) {
   return (
-    <div className="rounded-xl bg-slate-50 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+    <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </p>
 
-      <p className="mt-2 text-lg font-bold text-slate-900">
+      <p className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">
         {value}
       </p>
     </div>
@@ -646,16 +717,16 @@ function LimitCard({
   return (
     <Card>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-slate-500">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
           {title}
         </p>
 
-        <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
+        <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-2 text-slate-600 dark:text-slate-300">
           {icon}
         </div>
       </div>
 
-      <p className="mt-4 text-xl font-bold text-slate-900">
+      <p className="mt-4 text-xl font-bold text-slate-900 dark:text-slate-100">
         {formatMoney(value)}
       </p>
     </Card>
@@ -670,18 +741,18 @@ function ScenarioCard({
   scenario,
 }: ScenarioCardProps) {
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {scenario.name}
       </p>
 
-      <p className="mt-2 font-bold text-slate-900">
+      <p className="mt-2 font-bold text-slate-900 dark:text-slate-100">
         {formatMoney(
           scenario.projectedEndBalance
         )}
       </p>
 
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         +{formatMoney(
           scenario.projectedAdditionalExpenses
         )}{" "}
@@ -701,12 +772,12 @@ function ComparisonRow({
   value,
 }: ComparisonRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-      <span className="text-sm text-slate-500">
+    <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0 last:pb-0">
+      <span className="text-sm text-slate-500 dark:text-slate-400">
         {label}
       </span>
 
-      <span className="font-semibold text-slate-900">
+      <span className="font-semibold text-slate-900 dark:text-slate-100">
         {formatMoney(value)}
       </span>
     </div>
@@ -719,8 +790,8 @@ function EmptyState({
   text: string;
 }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-5 text-center">
-      <p className="text-sm text-slate-500">
+    <div className="rounded-xl bg-slate-50 dark:bg-slate-900 p-5 text-center">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
         {text}
       </p>
     </div>

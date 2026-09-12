@@ -8,6 +8,7 @@ import type { BudgetSettings } from "../../types/finance";
 import { formatMoney } from "../../utils/formatMoney";
 import { CURRENCY_OPTIONS } from "../../utils/currency";
 import { useBudget } from "../../context/BudgetContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export function BudgetSettings() {
   const [settings, setSettings] =
@@ -15,6 +16,7 @@ export function BudgetSettings() {
 
   const [saved, setSaved] = useState(false);
   const { budgetMonth, updateBudgetMonth } = useBudget();
+  const { theme, setTheme } = useTheme();
 
   const updateNumber = (
     field:
@@ -54,10 +56,10 @@ export function BudgetSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Budget
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Configure les règles principales de ton budget.
         </p>
       </div>
@@ -65,7 +67,7 @@ export function BudgetSettings() {
       <Card title="Paramètres financiers">
         <div className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
               Budget mensuel habituel
             </label>
 
@@ -80,16 +82,16 @@ export function BudgetSettings() {
                   event.target.value
                 )
               }
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
 
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
               {formatMoney(settings.usualMonthlyAmount)}
             </p>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
               Premier jour du mois budgétaire
             </label>
 
@@ -104,12 +106,12 @@ export function BudgetSettings() {
                   event.target.value
                 )
               }
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
               Réserve minimale de fin de mois
             </label>
 
@@ -124,12 +126,12 @@ export function BudgetSettings() {
                   event.target.value
                 )
               }
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">
               Devise
             </label>
 
@@ -142,7 +144,7 @@ export function BudgetSettings() {
                   updatedAt: new Date().toISOString(),
                 }))
               }
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               {CURRENCY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -158,11 +160,40 @@ export function BudgetSettings() {
           </Button>
 
           {saved && (
-            <p className="text-sm font-medium text-emerald-600">
+            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
               Paramètres enregistrés.
             </p>
           )}
         </div>
+      </Card>
+
+      <Card title="Apparence">
+        <div className="grid grid-cols-3 gap-3">
+          {(
+            [
+              { value: "light" as const, label: "Clair" },
+              { value: "dark" as const, label: "Sombre" },
+              { value: "system" as const, label: "Système" },
+            ]
+          ).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setTheme(option.value)}
+              className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                theme === option.value
+                  ? "border-blue-600 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 dark:border-blue-500 dark:bg-blue-950 dark:text-blue-300"
+                  : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500 dark:text-slate-500">
+          « Système » suit automatiquement le réglage de ton téléphone.
+        </p>
       </Card>
 
       <Card title="Alertes">
@@ -206,7 +237,7 @@ export function BudgetSettings() {
                 className="h-4 w-4"
               />
 
-              <span className="text-sm text-slate-700">
+              <span className="text-sm text-slate-700 dark:text-slate-300">
                 {label}
               </span>
             </label>

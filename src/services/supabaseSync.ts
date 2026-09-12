@@ -65,53 +65,13 @@ function writeLocalData(data: Record<string, unknown>) {
   }
 }
 
-function getUpdatedAt(value: unknown): number {
-  if (!value || typeof value !== "object") return 0;
-  const object = value as Record<string, unknown>;
-  for (const candidate of [object.updatedAt, object.createdAt, object.closedAt]) {
-    if (typeof candidate === "string") {
-      const timestamp = new Date(candidate).getTime();
-      if (!Number.isNaN(timestamp)) return timestamp;
-    }
-  }
-  return 0;
-}
-
-function mergeArrays(localValue: unknown, cloudValue: unknown): unknown[] {
-  const localArray = Array.isArray(localValue) ? localValue : [];
-  const cloudArray = Array.isArray(cloudValue) ? cloudValue : [];
-  const merged = new Map<string, unknown>();
-
-  for (const item of [...cloudArray, ...localArray]) {
-    if (!item || typeof item !== "object" || !("id" in item) || typeof (item as { id?: unknown }).id !== "string") continue;
-    const id = (item as { id: string }).id;
-    const existing = merged.get(id);
-    if (!existing || getUpdatedAt(item) >= getUpdatedAt(existing)) merged.set(id, item);
-  }
-
-  const withoutIds = [...cloudArray, ...localArray].filter(
-    (item) => !(item && typeof item === "object" && "id" in item && typeof (item as { id?: unknown }).id === "string")
-  );
-  return [...merged.values(), ...withoutIds];
-}
-
-function mergeValues(localValue: unknown, cloudValue: unknown): unknown {
-  if (Array.isArray(localValue) || Array.isArray(cloudValue)) return mergeArrays(localValue, cloudValue);
-  if (localValue && typeof localValue === "object" && cloudValue && typeof cloudValue === "object") {
-    if ("updatedAt" in localValue || "updatedAt" in cloudValue) {
-      return getUpdatedAt(localValue) >= getUpdatedAt(cloudValue) ? localValue : cloudValue;
-    }
-  }
-  return localValue !== undefined ? localValue : cloudValue;
-}
-
-function mergeSnapshots(local: BudgetSnapshot, cloud: BudgetSnapshot): BudgetSnapshot {
-  const mergedData: Record<string, unknown> = {};
-  for (const key of new Set([...Object.keys(cloud.data), ...Object.keys(local.data)])) {
-    mergedData[key] = mergeValues(local.data[key], cloud.data[key]);
-  }
-  return { version: 1, updatedAt: new Date().toISOString(), data: mergedData };
-}
+// NOTE : on n'essaie plus de "fusionner" intelligemment les données locales et celles
+// du cloud item par item. Cette fusion ne savait pas reconnaitre une suppression
+// (un element absent du tableau local revenait toujours de la version cloud), ce qui
+// faisait ressusciter les elements supprimes. A la place : pullCloudData() ecrase le
+// local avec le cloud (utilise uniquement a la connexion), et pushLocalData() ecrase
+// le cloud avec le local (utilise a chaque modification). Un seul appareil actif a la
+// fois est considere comme la source de verite.
 
 function createSnapshot(): BudgetSnapshot {
   return { version: 1, updatedAt: new Date().toISOString(), data: readCurrentLocalData() };
@@ -144,14 +104,12 @@ async function uploadCloudSnapshot(userId: string, snapshot: BudgetSnapshot) {
   if (error) throw error;
 }
 
-export async function synchronizeUserData(userId: string): Promise<{ snapshot: BudgetSnapshot; status: "synced" }> {
-  const localSnapshot = createSnapshot();
+export async function pullCloudData(userId: string): Promise<BudgetSnapshot | null> {
   const cloudSnapshot = await fetchCloudSnapshot(userId);
-  const finalSnapshot = cloudSnapshot ? mergeSnapshots(localSnapshot, cloudSnapshot) : localSnapshot;
-  writeLocalData(finalSnapshot.data);
-  saveUserSnapshotLocally(userId, finalSnapshot);
-  await uploadCloudSnapshot(userId, finalSnapshot);
-  return { snapshot: finalSnapshot, status: "synced" };
+  if (!cloudSnapshot) return null;
+  writeLocalData(cloudSnapshot.data);
+  saveUserSnapshotLocally(userId, cloudSnapshot);
+  return cloudSnapshot;
 }
 
 export async function pushLocalData(userId: string): Promise<BudgetSnapshot> {

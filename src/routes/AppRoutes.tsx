@@ -1,47 +1,56 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { MainLayout } from "../layouts/MainLayout";
 import { RequireAuth } from "../components/auth/RequireAuth";
+import { isOnboardingCompleted } from "../services/storage";
 
-import { Auth } from "../pages/Auth/Auth";
-import { Dashboard } from "../pages/Dashboard/Dashboard";
-import { Expenses } from "../pages/Expenses/Expenses";
-import { Goals } from "../pages/Goals/Goals";
-import { Onboarding } from "../pages/Onboarding/Onboarding";
-import { Statistics } from "../pages/Statistics/Statistics";
-import { RecurringExpenses } from "../pages/Recurring/RecurringExpenses";
-import { Simulator } from "../pages/Simulator/Simulator";
-import { Calendar } from "../pages/Calendar/Calendar";
-import { More } from "../pages/Settings/More";
-import { BudgetSettings } from "../pages/Settings/BudgetSettings";
-import { DataSettings } from "../pages/Settings/DataSettings";
-import { Categories } from "../pages/Settings/Categories";
-import { PlannedExpenses } from "../pages/Expenses/PlannedExpenses";
-import { Assistant } from "../pages/Assistant/Assistant";
-import { Alerts } from "../pages/Assistant/Alerts";
-import { FuturePurchases } from "../pages/Purchases/FuturePurchases";
-import { History } from "../pages/Statistics/History";
-import { Notifications } from "../pages/Assistant/Notifications";
-import { Profile } from "../pages/Settings/Profile";
-import { Security } from "../pages/Settings/Security";
+const Auth = lazy(() => import("../pages/Auth/Auth").then((m) => ({ default: m.Auth })));
+const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard").then((m) => ({ default: m.Dashboard })));
+const Expenses = lazy(() => import("../pages/Expenses/Expenses").then((m) => ({ default: m.Expenses })));
+const Goals = lazy(() => import("../pages/Goals/Goals").then((m) => ({ default: m.Goals })));
+const Onboarding = lazy(() => import("../pages/Onboarding/Onboarding").then((m) => ({ default: m.Onboarding })));
+const Statistics = lazy(() => import("../pages/Statistics/Statistics").then((m) => ({ default: m.Statistics })));
+const RecurringExpenses = lazy(() => import("../pages/Recurring/RecurringExpenses").then((m) => ({ default: m.RecurringExpenses })));
+const Simulator = lazy(() => import("../pages/Simulator/Simulator").then((m) => ({ default: m.Simulator })));
+const Calendar = lazy(() => import("../pages/Calendar/Calendar").then((m) => ({ default: m.Calendar })));
+const More = lazy(() => import("../pages/Settings/More").then((m) => ({ default: m.More })));
+const BudgetSettings = lazy(() => import("../pages/Settings/BudgetSettings").then((m) => ({ default: m.BudgetSettings })));
+const DataSettings = lazy(() => import("../pages/Settings/DataSettings").then((m) => ({ default: m.DataSettings })));
+const Categories = lazy(() => import("../pages/Settings/Categories").then((m) => ({ default: m.Categories })));
+const PlannedExpenses = lazy(() => import("../pages/Expenses/PlannedExpenses").then((m) => ({ default: m.PlannedExpenses })));
+const Assistant = lazy(() => import("../pages/Assistant/Assistant").then((m) => ({ default: m.Assistant })));
+const Alerts = lazy(() => import("../pages/Assistant/Alerts").then((m) => ({ default: m.Alerts })));
+const FuturePurchases = lazy(() => import("../pages/Purchases/FuturePurchases").then((m) => ({ default: m.FuturePurchases })));
+const History = lazy(() => import("../pages/Statistics/History").then((m) => ({ default: m.History })));
+const Notifications = lazy(() => import("../pages/Assistant/Notifications").then((m) => ({ default: m.Notifications })));
+const Profile = lazy(() => import("../pages/Settings/Profile").then((m) => ({ default: m.Profile })));
+const Security = lazy(() => import("../pages/Settings/Security").then((m) => ({ default: m.Security })));
 
 function Protected({ children }: { children: React.ReactNode }) {
   return <RequireAuth>{children}</RequireAuth>;
 }
 
+function RouteLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-900 dark:border-slate-600 dark:border-t-slate-100" />
+    </div>
+  );
+}
+
 function NotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-center">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900 px-6 text-center">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">Erreur 404</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">Page introuvable</h1>
-        <p className="mt-2 text-slate-500">Cette page n'existe pas ou a été déplacée.</p>
-        <a href="/" className="mt-6 inline-flex rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white">Retour à l'accueil</a>
+        <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">Erreur 404</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Page introuvable</h1>
+        <p className="mt-2 text-slate-500 dark:text-slate-400">Cette page n'existe pas ou a été déplacée.</p>
+        <a href="/" className="mt-6 inline-flex rounded-xl bg-slate-900 dark:bg-slate-700 px-4 py-3 font-semibold text-white">Retour à l'accueil</a>
       </div>
     </main>
   );
 }
-import { isOnboardingCompleted } from "../services/storage";
 
 function AppEntry() {
   return (
@@ -59,6 +68,7 @@ function AppEntry() {
 
 export function AppRoutes() {
   return (
+    <Suspense fallback={<RouteLoading />}>
     <Routes>
       <Route path="/auth" element={<Auth />} />
 
@@ -186,5 +196,6 @@ export function AppRoutes() {
         element={<NotFound />}
       />
     </Routes>
+    </Suspense>
   );
 }

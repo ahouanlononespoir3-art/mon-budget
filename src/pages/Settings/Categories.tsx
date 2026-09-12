@@ -35,16 +35,21 @@ export function Categories() {
   };
 
   const remove = (category: Category) => {
-    if (expenses.some((expense) => expense.categoryId === category.id) || plannedExpenses.some((expense) => expense.categoryId === category.id)) return;
+    const inUse = expenses.some((expense) => expense.categoryId === category.id) || plannedExpenses.some((expense) => expense.categoryId === category.id);
+    if (inUse) {
+      window.alert(`"${category.name}" est utilisée par des dépenses existantes et ne peut pas être supprimée. Tu peux la désactiver à la place (bouton marche/arrêt).`);
+      return;
+    }
+    if (!window.confirm(`Voulez-vous vraiment supprimer la catégorie "${category.name}" ?`)) return;
     updateCategories(categories.filter((item) => item.id !== category.id));
   };
 
   return <div className="space-y-6">
-    <header><p className="text-sm font-medium text-slate-500">Organisation</p><h1 className="mt-1 text-2xl font-bold text-slate-900">Catégories</h1><p className="mt-1 text-sm text-slate-500">Classe tes dépenses et surveille les budgets par catégorie.</p></header>
+    <header><p className="text-sm font-medium text-slate-500 dark:text-slate-400">Organisation</p><h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Catégories</h1><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Classe tes dépenses et surveille les budgets par catégorie.</p></header>
     <Card title={editingId ? "Modifier la catégorie" : "Ajouter une catégorie"}>
       <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom de la catégorie" className="rounded-xl border border-slate-300 px-4 py-3" />
-        <input type="number" min="0" value={monthlyLimit} onChange={(event) => setMonthlyLimit(event.target.value)} placeholder="Budget mensuel (facultatif)" className="rounded-xl border border-slate-300 px-4 py-3" />
+        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nom de la catégorie" className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3" />
+        <input type="number" min="0" value={monthlyLimit} onChange={(event) => setMonthlyLimit(event.target.value)} placeholder="Budget mensuel (facultatif)" className="rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3" />
         <Button onClick={save}><Plus className="mr-2 h-4 w-4" />{editingId ? "Modifier" : "Ajouter"}</Button>
       </div>
     </Card>
@@ -54,9 +59,9 @@ export function Categories() {
         const planned = plannedExpenses.filter((expense) => expense.categoryId === category.id && expense.status === "planned").reduce((sum, expense) => sum + expense.amount, 0);
         const exceeded = category.monthlyLimit != null && actual + planned > category.monthlyLimit;
         return <Card key={category.id}>
-          <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-slate-900">{category.name}</h2><p className="mt-1 text-sm text-slate-500">{category.active ? "Active" : "Inactive"}</p></div><div className="flex gap-1"><Button size="small" variant="ghost" onClick={() => edit(category)} aria-label={`Modifier ${category.name}`}><Pencil className="h-4 w-4" /></Button><Button size="small" variant="ghost" onClick={() => updateCategories(categories.map((item) => item.id === category.id ? { ...item, active: !item.active, updatedAt: new Date().toISOString() } : item))} aria-label={`Activer ou désactiver ${category.name}`}><Power className="h-4 w-4" /></Button><Button size="small" variant="danger" onClick={() => remove(category)} aria-label={`Supprimer ${category.name}`}><Trash2 className="h-4 w-4" /></Button></div></div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-slate-500">Réel</p><strong>{formatMoney(actual)}</strong></div><div><p className="text-slate-500">Prévu</p><strong>{formatMoney(planned)}</strong></div></div>
-          {category.monthlyLimit != null && <p className={`mt-3 text-sm font-semibold ${exceeded ? "text-red-600" : "text-emerald-600"}`}>Budget : {formatMoney(category.monthlyLimit)}{exceeded ? " · Dépassement" : ""}</p>}
+          <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-slate-900 dark:text-slate-100">{category.name}</h2><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{category.active ? "Active" : "Inactive"}</p></div><div className="flex gap-1"><Button size="small" variant="ghost" onClick={() => edit(category)} aria-label={`Modifier ${category.name}`}><Pencil className="h-4 w-4" /></Button><Button size="small" variant="ghost" onClick={() => updateCategories(categories.map((item) => item.id === category.id ? { ...item, active: !item.active, updatedAt: new Date().toISOString() } : item))} aria-label={`Activer ou désactiver ${category.name}`}><Power className="h-4 w-4" /></Button><Button size="small" variant="danger" onClick={() => remove(category)} aria-label={`Supprimer ${category.name}`}><Trash2 className="h-4 w-4" /></Button></div></div>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-slate-500 dark:text-slate-400">Réel</p><strong>{formatMoney(actual)}</strong></div><div><p className="text-slate-500 dark:text-slate-400">Prévu</p><strong>{formatMoney(planned)}</strong></div></div>
+          {category.monthlyLimit != null && <p className={`mt-3 text-sm font-semibold ${exceeded ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>Budget : {formatMoney(category.monthlyLimit)}{exceeded ? " · Dépassement" : ""}</p>}
         </Card>;
       })}
     </div>

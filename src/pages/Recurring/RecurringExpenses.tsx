@@ -117,15 +117,24 @@ export function RecurringExpenses() {
     });
   };
 
+  const handleDeleteRecurring = (expense: RecurringExpense) => {
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment supprimer "${expense.name}" ? Les dépenses déjà planifiées à partir de cette règle ne seront pas supprimées.`
+    );
+    if (confirmed) {
+      deleteRecurringExpense(expense.id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             Dépenses récurrentes
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Automatise tes dépenses régulières.
           </p>
         </div>
@@ -147,7 +156,7 @@ export function RecurringExpenses() {
             <div>
               <label
                 htmlFor="recurring-name"
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Nom
               </label>
@@ -159,14 +168,14 @@ export function RecurringExpenses() {
                   setName(event.target.value)
                 }
                 placeholder="Ex. Loyer"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
               <label
                 htmlFor="recurring-amount"
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Montant
               </label>
@@ -181,14 +190,14 @@ export function RecurringExpenses() {
                   setAmount(event.target.value)
                 }
                 placeholder="50000"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
               <label
                 htmlFor="recurring-category"
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Catégorie
               </label>
@@ -199,7 +208,7 @@ export function RecurringExpenses() {
                 onChange={(event) =>
                   setCategoryId(event.target.value)
                 }
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 {categories.map((category) => (
                   <option
@@ -215,7 +224,7 @@ export function RecurringExpenses() {
             <div>
               <label
                 htmlFor="recurring-frequency"
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Fréquence
               </label>
@@ -228,7 +237,7 @@ export function RecurringExpenses() {
                     event.target.value as ExpenseFrequency
                   )
                 }
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 {Object.entries(frequencyLabels).map(
                   ([value, label]) => (
@@ -246,7 +255,7 @@ export function RecurringExpenses() {
             <div>
               <label
                 htmlFor="recurring-next-date"
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Prochaine date
               </label>
@@ -258,14 +267,14 @@ export function RecurringExpenses() {
                 onChange={(event) =>
                   setNextDate(event.target.value)
                 }
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
               <label
                 htmlFor="recurring-note"
-                className="mb-2 block text-sm font-semibold text-slate-700"
+                className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300"
               >
                 Note
               </label>
@@ -277,7 +286,7 @@ export function RecurringExpenses() {
                   setNote(event.target.value)
                 }
                 placeholder="Optionnel"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
           </div>
@@ -292,7 +301,7 @@ export function RecurringExpenses() {
               className="h-4 w-4"
             />
 
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Dépense obligatoire
             </span>
           </label>
@@ -323,11 +332,11 @@ export function RecurringExpenses() {
         }`}
       >
         {activeExpenses.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">
+          <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
             Aucune dépense récurrente active.
           </p>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {activeExpenses.map((expense) => (
               <div
                 key={expense.id}
@@ -335,18 +344,18 @@ export function RecurringExpenses() {
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                       {expense.name}
                     </h3>
 
                     {expense.mandatory && (
-                      <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-600">
+                      <span className="rounded-full bg-red-50 dark:bg-red-950 px-2 py-1 text-xs font-semibold text-red-600 dark:text-red-400">
                         Obligatoire
                       </span>
                     )}
                   </div>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {getCategoryName(
                       expense.categoryId
                     )}{" "}
@@ -354,20 +363,20 @@ export function RecurringExpenses() {
                     {frequencyLabels[expense.frequency]}
                   </p>
 
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     Prochaine échéance :{" "}
                     {expense.nextDate}
                   </p>
 
                   {expense.note && (
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                       {expense.note}
                     </p>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <strong className="text-lg text-slate-900">
+                  <strong className="text-lg text-slate-900 dark:text-slate-100">
                     {formatMoney(expense.amount)}
                   </strong>
 
@@ -390,7 +399,7 @@ export function RecurringExpenses() {
                     size="small"
                     aria-label={`Supprimer ${expense.name}`}
                     onClick={() =>
-                      deleteRecurringExpense(expense.id)
+                      handleDeleteRecurring(expense)
                     }
                   >
                     <Trash2 className="h-4 w-4" />
@@ -404,25 +413,25 @@ export function RecurringExpenses() {
 
       {inactiveExpenses.length > 0 && (
         <Card title="Règles désactivées">
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {inactiveExpenses.map((expense) => (
               <div
                 key={expense.id}
                 className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-semibold text-slate-700">
+                  <p className="font-semibold text-slate-700 dark:text-slate-300">
                     {expense.name}
                   </p>
 
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-400 dark:text-slate-500">
                     {formatMoney(expense.amount)} ·{" "}
                     {getCategoryName(
                       expense.categoryId
                     )}
                   </p>
 
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     {frequencyLabels[expense.frequency]}
                   </p>
                 </div>
@@ -447,7 +456,7 @@ export function RecurringExpenses() {
                     size="small"
                     aria-label={`Supprimer ${expense.name}`}
                     onClick={() =>
-                      deleteRecurringExpense(expense.id)
+                      handleDeleteRecurring(expense)
                     }
                   >
                     <Trash2 className="h-4 w-4" />
